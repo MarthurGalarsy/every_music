@@ -1,36 +1,63 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
+    <meta charset="UTF-8" />
     <title>新規登録</title>
-    <link rel="stylesheet" href="/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/css/style.css">
-    <script src="/js/main.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f6f8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .register-container {
+            max-width: 500px;
+            margin: 80px auto;
+            padding: 30px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+        .form-control {
+            border-radius: 8px;
+        }
+        .btn-success, .btn-link {
+            border-radius: 8px;
+        }
+    </style>
 </head>
-<body class="container mt-5">
-<h2>新規登録</h2>
-<form th:action="@{/member/register}" th:object="${registerForm}" method="post">
-    <div class="mb-3">
-        <label class="form-label">メールアドレス</label>
-        <input type="email" class="form-control" th:field="*{mailAddress}" />
-        <div class="text-danger" th:errors="*{mailAddress}"></div>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">名前</label>
-        <input type="text" class="form-control" th:field="*{name}" />
-        <div class="text-danger" th:errors="*{name}"></div>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">パスワード</label>
-        <input type="password" class="form-control" th:field="*{password}" />
-        <div class="text-danger" th:errors="*{password}"></div>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">パスワード確認</label>
-        <input type="password" class="form-control" th:field="*{passwordConfirm}" />
-    </div>
-    <button type="submit" class="btn btn-success">登録</button>
-    <a class="btn btn-link" th:href="@{/member/login}">戻る</a>
-</form>
-<div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+<body>
+<div class="register-container">
+    <h2 class="text-center">新規登録</h2>
+    <form th:action="@{/member/register}" th:object="${registerForm}" method="post">
+        <div class="mb-3">
+            <label class="form-label">メールアドレス</label>
+            <input type="email" class="form-control" th:field="*{mailAddress}" />
+            <div class="text-danger" th:errors="*{mailAddress}"></div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">名前</label>
+            <input type="text" class="form-control" th:field="*{name}" />
+            <div class="text-danger" th:errors="*{name}"></div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">パスワード</label>
+            <input type="password" class="form-control" th:field="*{password}" />
+            <div class="text-danger" th:errors="*{password}"></div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">パスワード確認</label>
+            <input type="password" class="form-control" th:field="*{passwordConfirm}" />
+        </div>
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-success">登録</button>
+            <a class="btn btn-link" th:href="@{/member/login}">戻る</a>
+        </div>
+    </form>
+    <div th:if="${error}" class="alert alert-danger mt-3" th:text="${error}"></div>
+</div>
 </body>
 </html>

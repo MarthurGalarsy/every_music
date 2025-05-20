@@ -10,15 +10,14 @@ import org.springframework.validation.BindingResult
 import org.springframework.web.bind.annotation.*
 
 @Controller
-@RequestMapping("/member")
 class MemberController(
     private val memberService: MemberService
 ) {
 
-    @GetMapping("/")
+    @GetMapping("/member/login")
     fun showLogin(): String = "member/login"
 
-    @PostMapping("/login")
+    @PostMapping("/member/login")
     fun login(
         @RequestParam mailAddress: String,
         @RequestParam password: String,
@@ -36,13 +35,13 @@ class MemberController(
         }
     }
 
-    @GetMapping("/register")
+    @GetMapping("/member/register")
     fun showRegister(model: Model): String {
         model.addAttribute("registerForm", RegisterForm())
         return "member/register"
     }
 
-    @PostMapping("/register")
+    @PostMapping("/member/register")
     fun register(
         @ModelAttribute("registerForm") @Valid form: RegisterForm,
         result: BindingResult,
@@ -76,7 +75,7 @@ class MemberController(
         }
     }
 
-    @GetMapping("/mypage")
+    @GetMapping("/member/mypage")
     fun showMypage(
         session: HttpSession,
         model: Model
@@ -92,7 +91,7 @@ class MemberController(
         return "member/mypage"
     }
 
-    @PostMapping("/update")
+    @PostMapping("/member/update")
     fun update(
         @ModelAttribute("mypageForm") @Valid form: MypageForm,
         result: BindingResult,
@@ -119,7 +118,7 @@ class MemberController(
         }
     }
 
-    @GetMapping("/logout")
+    @GetMapping("/member/logout")
     fun logout(session: HttpSession): String {
         session.invalidate()
         return "redirect:/member/login"
