@@ -1,0 +1,12 @@
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/every_music
+    username: root
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  thymeleaf:
+    cache: false
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.example.everymusic.model
