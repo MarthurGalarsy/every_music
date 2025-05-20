@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>マイページ</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/main.js"></script>
+</head>
+<body class="container mt-5">
+<h2>マイページ</h2>
+<form th:action="@{/member/update}" th:object="${mypageForm}" method="post">
+    <div class="mb-3">
+        <label class="form-label">メールアドレス</label>
+        <input type="email" class="form-control" th:field="*{mailAddress}" readonly />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">名前</label>
+        <input type="text" class="form-control" th:field="*{name}" />
+        <div class="text-danger" th:errors="*{name}"></div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">パスワード</label>
+        <input type="password" class="form-control" th:field="*{password}" />
+        <div class="text-danger" th:errors="*{password}"></div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">パスワード確認</label>
+        <input type="password" class="form-control" th:field="*{passwordConfirm}" />
+    </div>
+    <button type="submit" class="btn btn-primary">変更</button>
+    <a class="btn btn-link" th:href="@{/song/list}">戻る</a>
+</form>
+<div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+</body>
+</html>
