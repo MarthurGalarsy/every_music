@@ -9,4 +9,4 @@ spring:
     cache: false
 mybatis:
   mapper-locations: classpath:mapper/*.xml
-  type-aliases-package: com.example.everymusic.model
+  type-aliases-package: com.everymusic.app.model

@@ -1,4 +1,4 @@
-package com.example.everymusic
+package com.everymusic.app
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
