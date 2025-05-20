@@ -2,8 +2,8 @@
 spring:
   datasource:
     url: jdbc:mysql://localhost:3306/every_music
-    username: root
-    password: password
+    username: ${DB_USER}
+    password: ${DB_PASS}
     driver-class-name: com.mysql.cj.jdbc.Driver
   thymeleaf:
     cache: false
