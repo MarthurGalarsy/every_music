@@ -1,7 +1,10 @@
 package com.everymusic.app.mapper
 
+import com.everymusic.app.model.SongInsert
 import com.everymusic.app.model.SongResponse
+import org.apache.ibatis.annotations.Insert
 import org.apache.ibatis.annotations.Mapper
+import org.apache.ibatis.annotations.Options
 import org.apache.ibatis.annotations.Param
 import org.apache.ibatis.annotations.Select
 
@@ -60,4 +63,23 @@ interface SongMapper {
         @Param("title") title: String?,
         @Param("creater") creater: String?
     ): Int
+
+    @Insert("""
+        INSERT INTO songs (
+            song_title,
+            song_note,
+            bpm,
+            beat_id,
+            creater_id
+        )
+        VALUES (
+            #{title},
+            #{note},
+            #{bpm},
+            #{beatId},
+            #{createrId}
+        )
+    """)
+    @Options(useGeneratedKeys = true, keyProperty = "id")
+    fun insertSong(song: SongInsert): Int
 }

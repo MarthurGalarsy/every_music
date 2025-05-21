@@ -8,3 +8,12 @@ data class SongResponse(
     val createrName: String,
     val beatName: String
 )
+
+data class SongInsert(
+    var id: Long = 0,
+    val title: String,
+    val note: String,
+    val bpm: Int,
+    val beatId: Int,
+    val createrId: Long
+)

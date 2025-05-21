@@ -197,6 +197,7 @@ every one, every time, music
 8. song_structureテーブルにInsertする
 9. chord_progressionテーブルにInsertする
 ### 戻るボタン
+1. 曲一覧画面に遷移
 # 演奏投稿画面
 ## 画面項目
 * 曲名（固定文言）
