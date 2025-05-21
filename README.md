@@ -56,6 +56,9 @@ every one, every time, music
 1. 曲一覧画面に遷移
 # 曲一覧画面
 ## 画面項目
+* ヘッダー
+    * マイページボタン
+    * ログアウトボタン
 * 検索
     * 曲名（テキストボックス、任意）
     * 作曲者（テキストボックス、任意）
@@ -71,8 +74,16 @@ every one, every time, music
 ### 初期表示
 1. songsテーブルから情報を取得
 2. songs.creater_idからmember.member_nameを取得
-3. 各画面から遷移してメッセージがある場合はメッセージを画面に渡す
-4. 画面表示
+3. songs.beat_idからbeat.nameを取得
+4. 各画面から遷移してメッセージがある場合はメッセージを画面に渡す
+5. 画面表示
+### マイページボタン
+1. ボタン押下後、入力内容をServerにリクエスト
+2. member_idをもとにmemberテーブルから情報を取得
+3. マイページ画面に遷移
+### マイページボタン
+1. ボタン押下後、入力内容をServerにリクエスト
+2. ログアウトを実施
 ### 検索ボタン
 1. ボタン押下後、入力内容をServerにリクエスト
 2. 入力された内容をもとにsongsテーブルから情報を取得
@@ -105,12 +116,13 @@ every one, every time, music
 ### 初期表示
 1. 曲IDからsongsテーブルを取得
 2. songs.creater_idからmember.member_nameを取得
-2. 曲IDからsong_song_structureテーブルを取得
-3. 曲IDからchord_progressionテーブルを取得
-4. 曲IDからsong_playテーブルを取得
-5. song_playを楽器種別ごとに分ける
-6. song_play.player_idからmember_nameを取得
-7. 画面表示
+3. songs.beat_idからbeat.nameを取得
+4. 曲IDからsong_song_structureテーブルを取得
+5. 曲IDからchord_progressionテーブルを取得
+6. 曲IDからsong_playテーブルを取得
+7. song_playを楽器種別ごとに分ける
+8. song_play.player_idからmember_nameを取得
+9. 画面表示
 ### 再生ボタン
 1. jQuery、Web Audio APIで処理を行う
 2. ラジオボタンで押下されている楽器の演奏を一斉再生する

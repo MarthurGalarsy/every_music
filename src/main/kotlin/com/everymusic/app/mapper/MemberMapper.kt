@@ -9,6 +9,9 @@ interface MemberMapper {
     @Select("SELECT * FROM member WHERE mail_address = #{mailAddress}")
     fun findByMail(@Param("mailAddress") mailAddress: String): Member?
 
+    @Select("SELECT * FROM member WHERE id = #{id}")
+    fun findById(@Param("id") id: Long): Member?
+
     @Insert("""
         INSERT INTO member (
             member_name,

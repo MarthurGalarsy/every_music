@@ -25,8 +25,9 @@ class AuthFilter : GenericFilterBean() {
         val isStatic = path.startsWith("/css") || path.startsWith("/js") || path.startsWith("/images")
         val isMemberPage = path.startsWith("/member")
         val isPublicPage = path == "/" || path.startsWith("/login")
+        val isApi = path.startsWith("/api/member/register") || path.startsWith("/api/member/login")
 
-        if (isStatic || isMemberPage || isPublicPage) {
+        if (isStatic || isMemberPage || isPublicPage || isApi) {
             chain.doFilter(req, res)
             return
         }

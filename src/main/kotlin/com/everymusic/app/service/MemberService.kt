@@ -21,6 +21,10 @@ class MemberService(
         else null
     }
 
+    fun findById(id: Long): Member? {
+        return memberMapper.findById(id)
+    }
+
     fun register(name: String, mailAddress: String, password: String): Boolean {
         if (memberMapper.findByMail(mailAddress) != null) return false
         val hashed = BCrypt.hashpw(password, BCrypt.gensalt())

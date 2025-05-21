@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <title>新規登録</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         body {
             background-color: #f4f6f8;
@@ -24,40 +25,63 @@
         .form-control {
             border-radius: 8px;
         }
-        .btn-success, .btn-link {
-            border-radius: 8px;
-        }
     </style>
 </head>
 <body>
 <div class="register-container">
     <h2 class="text-center">新規登録</h2>
-    <form th:action="@{/member/register}" th:object="${registerForm}" method="post">
+    <form id="register-form">
         <div class="mb-3">
             <label class="form-label">メールアドレス</label>
-            <input type="email" class="form-control" th:field="*{mailAddress}" />
-            <div class="text-danger" th:errors="*{mailAddress}"></div>
+            <input type="email" class="form-control" name="mailAddress" required />
         </div>
         <div class="mb-3">
             <label class="form-label">名前</label>
-            <input type="text" class="form-control" th:field="*{name}" />
-            <div class="text-danger" th:errors="*{name}"></div>
+            <input type="text" class="form-control" name="name" required />
         </div>
         <div class="mb-3">
             <label class="form-label">パスワード</label>
-            <input type="password" class="form-control" th:field="*{password}" />
-            <div class="text-danger" th:errors="*{password}"></div>
+            <input type="password" class="form-control" name="password" required />
         </div>
         <div class="mb-3">
             <label class="form-label">パスワード確認</label>
-            <input type="password" class="form-control" th:field="*{passwordConfirm}" />
+            <input type="password" class="form-control" name="passwordConfirm" required />
         </div>
         <div class="d-grid gap-2">
             <button type="submit" class="btn btn-success">登録</button>
-            <a class="btn btn-link" th:href="@{/member/login}">戻る</a>
+            <a class="btn btn-link" th:href="@{/}">戻る</a>
         </div>
     </form>
-    <div th:if="${error}" class="alert alert-danger mt-3" th:text="${error}"></div>
+    <div id="error-message" class="alert alert-danger mt-3 d-none"></div>
 </div>
+<script>
+    $("#register-form").on("submit", function(e) {
+        e.preventDefault();
+        const data = {
+            mailAddress: this.mailAddress.value,
+            name: this.name.value,
+            password: this.password.value,
+            passwordConfirm: this.passwordConfirm.value
+        };
+        $.ajax({
+            url: "/api/member/register",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(data)
+        })
+            .done(response => {
+                console.log("登録成功:", response); // ✅ レスポンスの中身確認
+                if (response.redirect) {
+                    window.location.href = response.redirect;
+                } else {
+                    console.warn("redirectがありません");
+                }
+            })
+            .fail(err => {
+                console.error("登録失敗:", err); // ✅ エラー時詳細
+                $("#error-message").text(err.responseJSON?.message || "登録に失敗しました").removeClass("d-none");
+            });
+    });
+</script>
 </body>
 </html>
