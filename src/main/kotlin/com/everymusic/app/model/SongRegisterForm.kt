@@ -22,3 +22,16 @@ data class ChordRequest(
     @field:Min(1)
     val measureNum: Int
 )
+
+data class SongCopyForm(
+    val title: String,
+    val note: String,
+    val bpm: Int,
+    val beatId: Int,
+    val structures: List<SongStructureForm>
+)
+
+data class SongStructureForm(
+    val sectionId: Int,
+    val chords: List<ChordRequest>
+)

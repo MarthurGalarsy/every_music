@@ -56,7 +56,7 @@ class MemberApiController(
         val member = memberService.findById(loginMember.id)
             ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf("message" to "メンバー情報が見つかりません"))
 
-        val form = MypageForm(member.mail_address, member.member_name)
+        val form = MypageForm(member.mailAddress, member.memberName)
         return ResponseEntity.ok(form)
     }
 

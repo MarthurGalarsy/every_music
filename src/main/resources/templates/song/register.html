@@ -38,12 +38,6 @@
 </head>
 <body class="container mt-4">
 <h2>曲投稿</h2>
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <button onclick="location.href='/member/mypage'" class="btn btn-outline-primary">マイページ</button>
-        <button id="logout" class="btn btn-outline-danger">ログアウト</button>
-    </div>
-</div>
 <div class="mb-3">
     <label class="form-label">曲名</label>
     <input type="text" class="form-control" id="title" required>
@@ -71,38 +65,49 @@
 <script th:inline="javascript">
     const beats = [[${beats}]];
     const sections = [[${sections}]];
+    const copySong = [[${copySong}]];
 </script>
 <script>
-    $(function() {
+    function createChordRow(chord = '', measure = '') {
+        return `<div class="chord-row">
+        <input type="text" class="form-control d-inline chord-input" placeholder="コード (A〜C)" required value="${chord}">
+        <input type="number" class="form-control d-inline measure-input" placeholder="小節数" style="width: 80px" required value="${measure}">
+        <button class="btn btn-sm btn-danger delete-chord">×</button>
+      </div>`;
+    }
+
+    function createStructureBlock(sectionId = '', chords = []) {
+        const block = $(`
+      <div class="structure-block">
+        <div class="d-flex justify-content-between">
+          <select class="form-select section-select" style="width: 200px;"></select>
+          <div>
+            <button class="btn btn-sm btn-outline-secondary copy-structure">構成コピー</button>
+            <button class="btn btn-sm btn-outline-danger delete-structure">構成削除</button>
+          </div>
+        </div>
+        <div class="chord-list sortable-horizontal mt-2"></div>
+        <button class="btn btn-sm btn-outline-primary mt-2 add-chord">コード追加</button>
+      </div>
+    `);
+        sections.forEach(s => block.find(".section-select").append(`<option value="${s.id}">${s.name}</option>`));
+        if (sectionId) block.find(".section-select").val(sectionId);
+        const list = block.find(".chord-list");
+        if (chords.length > 0) {
+            chords.forEach(c => list.append(createChordRow(c.chord, c.measureNum)));
+        } else {
+            list.append(createChordRow());
+        }
+        return block;
+    }
+
+    function enableSort() {
+        $(".sortable-vertical").sortable({ axis: "y" });
+        $(".sortable-horizontal").sortable({ axis: "x" });
+    }
+
+    $(function () {
         beats.forEach(b => $("#beatId").append(`<option value="${b.id}">${b.name}</option>`));
-
-        function createChordRow() {
-            return `<div class="chord-row">
-            <input type="text" class="form-control d-inline chord-input" placeholder="コード (A〜C)" required>
-            <input type="number" class="form-control d-inline measure-input" placeholder="小節数" style="width: 80px" required>
-            <button class="btn btn-sm btn-danger delete-chord">×</button>
-        </div>`;
-        }
-
-        function createStructureBlock() {
-            const block = $(`
-            <div class="structure-block">
-                <div class="d-flex justify-content-between">
-                    <select class="form-select section-select" style="width: 200px;"></select>
-                    <div>
-                        <button class="btn btn-sm btn-outline-secondary copy-structure">構成コピー</button>
-                        <button class="btn btn-sm btn-outline-danger delete-structure">構成削除</button>
-                    </div>
-                </div>
-                <div class="chord-list sortable-horizontal mt-2">
-                    ${createChordRow()}
-                </div>
-                <button class="btn btn-sm btn-outline-primary mt-2 add-chord">コード追加</button>
-            </div>
-        `);
-            sections.forEach(s => block.find(".section-select").append(`<option value="${s.id}">${s.name}</option>`));
-            return block;
-        }
 
         $("#add-structure").click(() => {
             const block = createStructureBlock();
@@ -110,77 +115,96 @@
             enableSort();
         });
 
-        $(document).on("click", ".add-chord", function() {
+        $(document).on("click", ".add-chord", function () {
             $(this).siblings(".chord-list").append(createChordRow());
             enableSort();
         });
-
-        $(document).on("click", ".delete-structure", function() {
+        $(document).on("click", ".delete-structure", function () {
             $(this).closest(".structure-block").remove();
         });
-
-        $(document).on("click", ".copy-structure", function() {
+        $(document).on("click", ".copy-structure", function () {
             const original = $(this).closest(".structure-block");
-            const copy = original.clone();
-            $("#structure-list").append(copy);
+            const clone = original.clone();
+            $("#structure-list").append(clone);
             enableSort();
         });
-
-        $(document).on("click", ".delete-chord", function() {
+        $(document).on("click", ".delete-chord", function () {
             $(this).closest(".chord-row").remove();
         });
 
-        function enableSort() {
-            $(".sortable-vertical").sortable({ axis: "y" });
-            $(".sortable-horizontal").sortable({ axis: "x" });
-        }
-
         enableSort();
 
-        $("#submit").click(() => {
-            $("#error-message").addClass("d-none").text("");
-            if (!confirm("一度投稿した曲は削除・変更ができません。よろしいですか？")) return;
+        if (copySong) {
+            $("#title").val(copySong.title);
+            $("#note").val(copySong.note);
+            $("#bpm").val(copySong.bpm);
+            $("#beatId").val(copySong.beatId);
+            copySong.structures.forEach(s => {
+                const block = createStructureBlock(s.sectionId, s.chords);
+                $("#structure-list").append(block);
+            });
+            enableSort();
+        }
+
+        $(document).on("click", "#submit", function () {
+            const title = $("#title").val();
+            const note = $("#note").val();
+            const bpm = parseInt($("#bpm").val());
+            const beatId = parseInt($("#beatId").val());
+
+            if (!title || !note || !bpm || !beatId) {
+                $("#error-message").text("すべての必須項目を入力してください").removeClass("d-none");
+                return;
+            }
 
             const structures = [];
+            let hasChord = false;
             let valid = true;
 
-            $(".structure-block").each(function() {
+            $("#structure-list .structure-block").each(function () {
                 const sectionId = parseInt($(this).find(".section-select").val());
                 const chords = [];
-                $(this).find(".chord-row").each(function() {
+
+                $(this).find(".chord-row").each(function () {
                     const chord = $(this).find(".chord-input").val();
                     const measure = parseInt($(this).find(".measure-input").val());
-                    if (!chord || !measure || isNaN(measure) || !chord.match(/^[A-G]/)) valid = false;
-                    chords.push({ chord: chord, measureNum: measure });
+                    if (!chord.match(/^[A-G]/)) valid = false;
+                    if (chord && measure) {
+                        chords.push({ chord, measureNum: measure });
+                        hasChord = true;
+                    }
                 });
-                if (chords.length === 0) valid = false;
-                structures.push({ sectionId: sectionId, chords: chords });
+
+                if (sectionId && chords.length > 0) {
+                    structures.push({ sectionId, chords });
+                }
             });
 
-            if (!valid || structures.length === 0) {
+            if (structures.length === 0 || !hasChord) {
+                $("#error-message").text("少なくとも1つの構成とコードが必要です").removeClass("d-none");
+                return;
+            }
+
+            if (!valid) {
                 $("#error-message").text("入力内容が不正です（コードはA〜Gで始めてください）").removeClass("d-none");
                 return;
             }
 
-            const data = {
-                title: $("#title").val(),
-                note: $("#note").val(),
-                bpm: parseInt($("#bpm").val()),
-                beatId: parseInt($("#beatId").val()),
-                structures: structures
-            };
+            if (!confirm("一度投稿した曲は削除・変更ができません。よろしいですか？")) return;
 
             $.ajax({
                 url: "/api/song/register",
-                method: "POST",
+                type: "POST",
                 contentType: "application/json",
-                data: JSON.stringify(data)
-            }).done(res => {
-                alert(res.message);
-                location.href = res.redirect;
-            }).fail(err => {
-                const msg = err.responseJSON?.message || "登録に失敗しました";
-                $("#error-message").text(msg).removeClass("d-none");
+                data: JSON.stringify({ title, note, bpm, beatId, structures }),
+                success: function (data) {
+                    alert(xhr.responseJSON?.message);
+                    window.location.href = data.redirect;
+                },
+                error: function (xhr) {
+                    const msg = xhr.responseJSON?.message || "投稿に失敗しました";
+                    $("#error-message").text(msg).removeClass("d-none");
+                }
             });
         });
     });

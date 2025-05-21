@@ -54,4 +54,23 @@ class SongRegisterService(
             }
         }
     }
+
+    fun getSongCopyData(songId: Long): SongCopyForm {
+        val song = songMapper.findById(songId)
+        val structures = songStructureMapper.findBySongId(songId)
+        val structureForms = structures.map { structure ->
+            val chords = chordProgressionMapper.findByStructureId(structure.id)
+            SongStructureForm(
+                sectionId = structure.sectionName.toIntOrNull() ?: 0, // 必要に応じてID取得へ
+                chords = chords.map { ChordRequest(it.chord, it.measureNum) }
+            )
+        }
+        return SongCopyForm(
+            title = song.songTitle,
+            note = song.songNote,
+            bpm = song.bpm,
+            beatId = song.beatId,
+            structures = structureForms
+        )
+    }
 }

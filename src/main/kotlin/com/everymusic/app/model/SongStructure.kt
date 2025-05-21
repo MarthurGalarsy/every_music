@@ -6,3 +6,13 @@ data class SongStructureInsert(
     val sectionId: Int,
     val sortOrder: Int
 )
+
+data class SongStructure(
+    val id: Long,
+    val sectionName: String
+)
+
+data class SongStructureView(
+    val sectionName: String,
+    val chords: List<ChordView>
+)
