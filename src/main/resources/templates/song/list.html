@@ -41,11 +41,16 @@
 
 <script>
     $(function() {
+        let currentPage = 1;
+        const pageSize = 10;
+
         function loadSongs(params = {}) {
+            params.page = currentPage;
+            params.size = pageSize;
             $.get("/api/song/list", params, function(data) {
                 const body = $("#song-body");
                 body.empty();
-                data.forEach(song => {
+                data.songs.forEach(song => {
                     body.append(`
                     <tr>
                         <td>${song.songTitle}</td>
@@ -57,18 +62,36 @@
                     </tr>
                 `);
                 });
+                renderPagination(data.totalCount);
             });
+        }
+
+        function renderPagination(totalCount) {
+            const totalPages = Math.ceil(totalCount / pageSize);
+            const pagination = $('#pagination');
+            pagination.empty();
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = $(`<button class='btn btn-sm ${i === currentPage ? "btn-primary" : "btn-outline-secondary"} me-1'>${i}</button>`);
+                btn.click(() => {
+                    currentPage = i;
+                    loadSongs({
+                        title: $("input[name='title']").val(),
+                        creater: $("input[name='creater']").val()
+                    });
+                });
+                pagination.append(btn);
+            }
         }
 
         loadSongs();
 
         $("#search-form").submit(function(e) {
             e.preventDefault();
-            const params = {
+            currentPage = 1;
+            loadSongs({
                 title: $("input[name='title']").val(),
                 creater: $("input[name='creater']").val()
-            };
-            loadSongs(params);
+            });
         });
 
         $("#logout").click(function() {
@@ -76,5 +99,6 @@
         });
     });
 </script>
+<div id="pagination" class="mt-3"></div>
 </body>
 </html>

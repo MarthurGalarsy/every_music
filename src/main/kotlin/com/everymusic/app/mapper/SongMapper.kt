@@ -8,7 +8,7 @@ import org.apache.ibatis.annotations.Select
 @Mapper
 interface SongMapper {
     @Select("""
-    <script>
+        <script>
         SELECT
             s.id,
             s.song_title,
@@ -30,10 +30,34 @@ interface SongMapper {
             </if>
         </where>
         ORDER BY s.id DESC
-    </script>
-""")
+        LIMIT #{limit} OFFSET #{offset}
+        </script>
+    """)
     fun findSongs(
         @Param("title") title: String?,
-        @Param("creater") creater: String?
+        @Param("creater") creater: String?,
+        @Param("limit") limit: Int,
+        @Param("offset") offset: Int
     ): List<SongResponse>
+
+    @Select("""
+        <script>
+        SELECT COUNT(*)
+        FROM songs s
+        JOIN member m ON s.creater_id = m.id
+        JOIN beat b ON s.beat_id = b.id
+        <where>
+            <if test="title != null and title != ''">
+                AND s.song_title LIKE CONCAT('%', #{title}, '%')
+            </if>
+            <if test="creater != null and creater != ''">
+                AND m.member_name LIKE CONCAT('%', #{creater}, '%')
+            </if>
+        </where>
+        </script>
+    """)
+    fun countSongs(
+        @Param("title") title: String?,
+        @Param("creater") creater: String?
+    ): Int
 }
