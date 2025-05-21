@@ -122,7 +122,9 @@ every one, every time, music
 6. 曲IDからsong_playテーブルを取得
 7. song_playを楽器種別ごとに分ける
 8. song_play.player_idからmember_nameを取得
-9. 画面表示
+9. 楽器種別毎に演奏の中を分けて画面表示
+    * 例えば、ドラム、ベース、リードギター、ボーカル毎に分けて表示
+    * ラジオボタンもそれぞれの楽器毎に1つずつ選択できること
 ### 再生ボタン
 1. jQuery、Web Audio APIで処理を行う
 2. ラジオボタンで押下されている楽器の演奏を一斉再生する
