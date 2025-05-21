@@ -97,7 +97,7 @@ CREATE TABLE `instruments` (
 ;
 
 CREATE TABLE `sections` (
-    `id` INT UNSIGNED NOT NULL,
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(50) NOT NULL,
     `display_order` INT UNSIGNED NOT NULL,
     PRIMARY KEY (`id`)

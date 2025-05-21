@@ -25,20 +25,20 @@ class AuthFilter : GenericFilterBean() {
         val isStatic = path.startsWith("/css") || path.startsWith("/js") || path.startsWith("/images")
         val isMemberPage = path.startsWith("/member")
         val isPublicPage = path == "/" || path.startsWith("/login")
-        val isApi = path.startsWith("/api/member/register") || path.startsWith("/api/member/login")
+        val isPublicApi = path.startsWith("/api/member/login") || path.startsWith("/api/member/register")
 
-        if (isStatic || isMemberPage || isPublicPage || isApi) {
+        if (isStatic || isMemberPage || isPublicPage || isPublicApi) {
             chain.doFilter(req, res)
             return
         }
 
         val session: HttpSession = request.getSession(false) ?: run {
-            response.sendRedirect("/member/login")
+            response.sendRedirect("/")
             return
         }
 
         if (session.getAttribute("loginMember") == null) {
-            response.sendRedirect("/member/login")
+            response.sendRedirect("/")
             return
         }
 
