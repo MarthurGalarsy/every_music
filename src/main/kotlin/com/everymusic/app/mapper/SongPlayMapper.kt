@@ -1,9 +1,10 @@
 package com.everymusic.app.mapper
 
 import com.everymusic.app.model.SongPlay
-import com.everymusic.app.model.SongPlayInsertRequest
+import com.everymusic.app.model.SongPlayInsertInsert
 import org.apache.ibatis.annotations.Insert
 import org.apache.ibatis.annotations.Mapper
+import org.apache.ibatis.annotations.Options
 import org.apache.ibatis.annotations.Param
 import org.apache.ibatis.annotations.Select
 
@@ -40,5 +41,6 @@ interface SongPlayMapper {
             #{memberId}
         )
     """)
-    fun insertPlay(req: SongPlayInsertRequest): Int
+    @Options(useGeneratedKeys = true, keyProperty = "id")
+    fun insertPlay(req: SongPlayInsertInsert): Int
 }

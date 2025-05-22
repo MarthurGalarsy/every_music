@@ -1,7 +1,7 @@
 package com.everymusic.app.mapper
 
 import com.everymusic.app.model.SongPlayFile
-import com.everymusic.app.model.SongPlayFileInsertRequest
+import com.everymusic.app.model.SongPlayFileInsertInsert
 import org.apache.ibatis.annotations.Insert
 import org.apache.ibatis.annotations.Mapper
 import org.apache.ibatis.annotations.Options
@@ -18,6 +18,6 @@ interface SongPlayFileMapper {
         VALUES ('audio', #{s3Key})
     """)
     @Options(useGeneratedKeys = true, keyProperty = "id")
-    fun insertPlayFile(req: SongPlayFileInsertRequest): Long
+    fun insertPlayFile(req: SongPlayFileInsertInsert): Long
 
 }

@@ -18,7 +18,8 @@ data class SongPlayView(
     val audioUrl: String
 )
 
-data class SongPlayInsertRequest(
+data class SongPlayInsertInsert(
+    val id: Long = 0,
     val songId: Long,
     val title: String,
     val note: String,

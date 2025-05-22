@@ -8,6 +8,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
+import java.net.URI
 import java.nio.file.Files
 import java.util.*
 
@@ -16,7 +17,10 @@ class S3UploaderService {
 
     private val dotenv = dotenv()
     private val region = Region.of(dotenv["AWS_REGION"])
+    val endpoint = dotenv["S3_ENDPOINT"] ?: "http://localhost:9000"
+
     private val s3: S3Client = S3Client.builder()
+        .endpointOverride(URI.create(endpoint))
         .region(region)
         .credentialsProvider(
             StaticCredentialsProvider.create(
@@ -26,6 +30,7 @@ class S3UploaderService {
                 )
             )
         )
+        .forcePathStyle(true) // ← MinIOでは必要
         .build()
 
     private val bucket = dotenv["S3_BUCKET_NAME"]

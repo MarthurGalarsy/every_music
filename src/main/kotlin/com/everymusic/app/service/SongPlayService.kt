@@ -3,8 +3,8 @@ package com.everymusic.app.service
 import com.everymusic.app.mapper.SongPlayFileMapper
 import com.everymusic.app.mapper.SongPlayMapper
 import com.everymusic.app.model.Member
-import com.everymusic.app.model.SongPlayFileInsertRequest
-import com.everymusic.app.model.SongPlayInsertRequest
+import com.everymusic.app.model.SongPlayFileInsertInsert
+import com.everymusic.app.model.SongPlayInsertInsert
 import com.everymusic.app.model.SongPlayUploadForm
 import org.springframework.stereotype.Service
 
@@ -19,12 +19,12 @@ class SongPlayService(
         member: Member
     ) {
         val fileId = songPlayFileMapper.insertPlayFile(
-            SongPlayFileInsertRequest(
-                "audio",
-                s3Key
+            SongPlayFileInsertInsert(
+                type = "audio",
+                s3Key = s3Key
             )
         )
-        val request = SongPlayInsertRequest(
+        val request = SongPlayInsertInsert(
             songId = form.songId,
             title = form.playTitle,
             note = form.playNote,
