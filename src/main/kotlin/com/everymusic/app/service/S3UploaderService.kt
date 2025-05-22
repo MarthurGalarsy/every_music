@@ -53,4 +53,10 @@ class S3UploaderService {
 
         return key // DB登録時などに使用
     }
+
+    fun getPublicUrl(s3Key: String): String {
+        val bucket = dotenv["S3_BUCKET_NAME"]
+        val endpoint = dotenv["S3_ENDPOINT"]
+        return "$endpoint/$bucket/$s3Key"
+    }
 }

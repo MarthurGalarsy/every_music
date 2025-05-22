@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service
 @Service
 class SongDetailService(
     private val instrumentService: InstrumentsService,
+    private val s3UploaderService: S3UploaderService,
     private val songMapper: SongMapper,
     private val memberMapper: MemberMapper,
     private val beatMapper: BeatMapper,
@@ -42,7 +43,7 @@ class SongDetailService(
                         title = play.playTitle,
                         note = play.playNote,
                         playerName = player!!.memberName,
-                        audioUrl = "/files/${file.s3Key}"
+                        audioUrl = s3UploaderService.getPublicUrl(file.s3Key)
                     )
                 }
                 if (filteredPlays.isNotEmpty()) inst to filteredPlays else null
