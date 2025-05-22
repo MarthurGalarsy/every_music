@@ -1,7 +1,7 @@
 package com.everymusic.app.mapper
 
 import com.everymusic.app.model.SongPlay
-import com.everymusic.app.model.SongPlayInsertInsert
+import com.everymusic.app.model.SongPlayInsert
 import org.apache.ibatis.annotations.Insert
 import org.apache.ibatis.annotations.Mapper
 import org.apache.ibatis.annotations.Options
@@ -42,5 +42,5 @@ interface SongPlayMapper {
         )
     """)
     @Options(useGeneratedKeys = true, keyProperty = "id")
-    fun insertPlay(req: SongPlayInsertInsert): Int
+    fun insertPlay(req: SongPlayInsert): Int
 }

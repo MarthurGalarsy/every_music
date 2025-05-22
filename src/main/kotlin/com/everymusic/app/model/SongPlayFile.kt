@@ -5,7 +5,7 @@ data class SongPlayFile(
     val s3Key: String
 )
 
-data class SongPlayFileInsertInsert(
+data class SongPlayFileInsert(
     val id: Long = 0,
     val type: String,
     val s3Key: String

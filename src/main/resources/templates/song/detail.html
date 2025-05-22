@@ -35,6 +35,15 @@
             flex-wrap: wrap;
             gap: 1rem;
         }
+         .instrument-column {
+             min-width: 280px;
+             max-width: 100%;
+         }
+        .scroll-box {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
     </style>
 </head>
 <body class="container mt-4">
@@ -67,26 +76,32 @@
 <form id="play-form" class="instrument-wrapper">
     <div th:each="entry : ${instruments}" class="instrument-column">
         <strong class="d-block mb-2" th:text="${entry.key.name}"></strong>
-        <div class="ms-2" th:each="play : ${entry.value}" style="margin-bottom: 1rem;">
-            <label class="form-check-label d-block">
-                <input type="radio" class="form-check-input me-2" th:name="${entry.key.id}" th:value="${play.audioUrl}" />
-                <span th:text="${play.title}"></span>
-            </label>
-            <small class="text-muted d-block" th:text="${play.note}"></small>
-            <small class="d-block fst-italic" th:text="'演奏者: ' + ${play.playerName}"></small>
-            <audio controls th:src="@{${play.audioUrl}}" class="mt-2 w-100"></audio>
+        <div class="scroll-box">
+            <div class="ms-2" th:each="play : ${entry.value}" style="margin-bottom: 1rem;">
+                <label class="form-check-label d-block">
+                    <input type="radio" class="form-check-input me-2" th:name="'instrument_' + ${entry.key.id}" th:value="${play.audioUrl}" />
+                    <span th:text="${play.title}"></span>
+                </label>
+                <small class="text-muted d-block" th:text="${play.note}"></small>
+                <small class="d-block fst-italic" th:text="'演奏者: ' + ${play.playerName}"></small>
+                <audio controls th:src="@{${play.audioUrl}}" class="mt-2 w-100"></audio>
+            </div>
         </div>
     </div>
 </form>
 
 <div class="d-flex gap-3 mt-4 mb-5">
     <button class="btn btn-primary" id="play-button">再生</button>
+    <button class="btn btn-danger" id="stop-button">停止</button>
     <a th:href="@{'/song/register/copy/' + ${song.id}}" class="btn btn-outline-secondary">コピーして新規作成</a>
     <a th:href="@{'/song/play/upload/' + ${song.id}}" class="btn btn-outline-info">演奏投稿</a>
     <a href="/song/list" class="btn btn-outline-dark">戻る</a>
 </div>
 
 <script>
+    let audioContext;
+    let sources = [];
+
     $('#play-button').on('click', async function() {
         const urls = [];
         $('#play-form input[type=radio]:checked').each(function() {
@@ -95,18 +110,32 @@
 
         if (urls.length === 0) return;
 
-        const context = new (window.AudioContext || window.webkitAudioContext)();
-        const buffers = await Promise.all(urls.map(url => fetch(url)
-            .then(res => res.arrayBuffer())
-            .then(data => context.decodeAudioData(data))));
-
-        const startTime = context.currentTime + 0.1;
-        buffers.forEach(buffer => {
-            const source = context.createBufferSource();
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        sources = await Promise.all(urls.map(async url => {
+            const res = await fetch(url);
+            const data = await res.arrayBuffer();
+            const buffer = await audioContext.decodeAudioData(data);
+            const source = audioContext.createBufferSource();
             source.buffer = buffer;
-            source.connect(context.destination);
-            source.start(startTime);
-        });
+            source.connect(audioContext.destination);
+            return source;
+        }));
+
+        const startTime = audioContext.currentTime + 0.1;
+        sources.forEach(src => src.start(startTime));
+    });
+
+    $('#stop-button').on('click', function() {
+        if (sources && sources.length > 0) {
+            sources.forEach(src => {
+                try { src.stop(); } catch (e) {}
+            });
+        }
+        if (audioContext) {
+            try { audioContext.close(); } catch (e) {}
+        }
+        sources = [];
+        audioContext = null;
     });
 </script>
 </body>
