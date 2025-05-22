@@ -80,7 +80,7 @@ CREATE TABLE song_play_file (
 -- master
 CREATE TABLE `beat` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    `name` VARCHAR(10) NOT NULL,
+    `name` VARCHAR(20) NOT NULL,
     `display_order` INT UNSIGNED NOT NULL,
     PRIMARY KEY(`id`)
 ) ENGINE = InnoDB
