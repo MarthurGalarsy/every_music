@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>演奏投稿</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .upload-container {
+            max-width: 600px;
+            margin: 60px auto;
+            padding: 30px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+        .form-control, .form-select {
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="upload-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <button onclick="location.href='/member/mypage'" class="btn btn-outline-primary">マイページ</button>
+            <button id="logout" class="btn btn-outline-danger">ログアウト</button>
+        </div>
+    </div>
+    <h2 class="text-center" th:text="${song.songTitle} + ' の演奏投稿'"></h2>
+    <form id="upload-form" enctype="multipart/form-data">
+        <input type="hidden" name="songId" th:value="${song.id}" />
+
+        <div class="mb-3">
+            <label class="form-label">楽器</label>
+            <select class="form-select" name="instrumentId">
+                <option th:each="ins : ${instruments}" th:value="${ins.id}" th:text="${ins.name}"></option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">演奏タイトル</label>
+            <input type="text" class="form-control" name="playTitle" required />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">説明</label>
+            <input type="text" class="form-control" name="playNote" required />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">演奏ファイル</label>
+            <input type="file" class="form-control" name="file" required />
+        </div>
+
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary">投稿</button>
+            <a class="btn btn-outline-secondary" th:href="@{'/song/detail/' + ${song.id}}">戻る</a>
+        </div>
+    </form>
+    <div id="error-message" class="alert alert-danger mt-3 d-none"></div>
+</div>
+
+<script>
+    $("#upload-form").on("submit", function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        $.ajax({
+            url: "/api/song/play/upload",
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false
+        }).done(data => {
+            window.location.href = data.redirect;
+        }).fail(err => {
+            $("#error-message").text(err.responseJSON?.message || "アップロードに失敗しました").removeClass("d-none");
+        });
+    });
+</script>
+</body>
+</html>

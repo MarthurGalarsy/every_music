@@ -6,6 +6,7 @@ import com.everymusic.app.mapper.SectionsMapper
 import com.everymusic.app.mapper.SongMapper
 import com.everymusic.app.mapper.SongStructureMapper
 import com.everymusic.app.model.*
+import org.apache.coyote.BadRequestException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -56,7 +57,7 @@ class SongRegisterService(
     }
 
     fun getSongCopyData(songId: Long): SongCopyForm {
-        val song = songMapper.findById(songId)
+        val song = songMapper.findById(songId) ?: throw BadRequestException("song not found")
         val structures = songStructureMapper.findBySongId(songId)
         val structureForms = structures.map { structure ->
             val chords = chordProgressionMapper.findByStructureId(structure.id)

@@ -66,7 +66,7 @@
 <h4 class="mt-4">演奏</h4>
 <form id="play-form" class="instrument-wrapper">
     <div th:each="entry : ${instruments}" class="instrument-column">
-        <strong th:text="${entry.key.name}" class="d-block mb-2"></strong>
+        <strong class="d-block mb-2" th:text="${entry.key.name}"></strong>
         <div class="ms-2" th:each="play : ${entry.value}" style="margin-bottom: 1rem;">
             <label class="form-check-label d-block">
                 <input type="radio" class="form-check-input me-2" th:name="${entry.key.id}" th:value="${play.audioUrl}" />

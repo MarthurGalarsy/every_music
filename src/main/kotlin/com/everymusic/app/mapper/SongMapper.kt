@@ -66,7 +66,7 @@ interface SongMapper {
     ): Int
 
     @Select("SELECT id, song_title, song_note, bpm, beat_id, creater_id FROM songs WHERE id = #{id}")
-    fun findById(@Param("id") id: Long): Song
+    fun findById(@Param("id") id: Long): Song?
 
     @Insert("""
         INSERT INTO songs (

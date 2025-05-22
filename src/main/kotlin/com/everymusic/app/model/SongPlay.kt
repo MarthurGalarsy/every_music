@@ -17,3 +17,12 @@ data class SongPlayView(
     val playerName: String,
     val audioUrl: String
 )
+
+data class SongPlayInsertRequest(
+    val songId: Long,
+    val title: String,
+    val note: String,
+    val instrumentId: Int,
+    val fileId: Long,
+    val memberId: Long
+)
