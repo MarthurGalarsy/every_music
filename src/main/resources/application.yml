@@ -1,4 +1,3 @@
-
 spring:
   datasource:
     url: jdbc:mysql://localhost:3306/every_music
@@ -10,3 +9,8 @@ spring:
 mybatis:
   mapper-locations: classpath*:mapper/**/*.xml  # 使っていなければ不要
   type-aliases-package: com.everymusic.app.model
+cloud:
+  aws:
+    region: ${AWS_REGION}
+    s3:
+      bucket: ${S3_BUCKET_NAME}

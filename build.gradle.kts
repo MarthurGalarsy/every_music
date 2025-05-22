@@ -36,8 +36,15 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
+    implementation("io.github.cdimascio:dotenv-kotlin:6.4.1")
+
     // DB
     runtimeOnly("com.mysql:mysql-connector-j")
+
+    // AWS
+    implementation("software.amazon.awssdk:s3:2.25.19")
+    implementation("software.amazon.awssdk:auth:2.25.19")
+    implementation("software.amazon.awssdk:regions:2.25.19")
 
     // テスト
     testImplementation("org.springframework.boot:spring-boot-starter-test")
