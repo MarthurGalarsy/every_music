@@ -57,13 +57,12 @@
             <input type="text" class="form-control" name="playNote" required />
         </div>
 
-        <div class="mb-3">
-            演奏は曲の1小節分の空白時間（BPM=150、4/4拍子であれば BPM150でクリック音4個分）を設けて１曲分録音してください。
-        </div>
+        <p>演奏は曲の1小節分の空白時間（BPM=150、4/4拍子であれば BPM150でクリック音4個分）を設けて１曲分録音してください。</p>
+        <p>演奏ファイルはmp3でアップロードしてください。</p>
 
         <div class="mb-3">
             <label class="form-label">演奏ファイル</label>
-            <input type="file" class="form-control" name="file" required />
+            <input type="file" class="form-control" name="file" accept="audio/mp3,audio/mpeg" required />
         </div>
 
         <div class="d-grid gap-2">
@@ -77,6 +76,14 @@
 <script>
     $("#upload-form").on("submit", function(e) {
         e.preventDefault();
+
+        const fileInput = $("input[name='file']")[0];
+        const file = fileInput.files[0];
+        if (file && !file.type.match(/^audio\/(mpeg|mp3)$/)) {
+            $("#error-message").text("mp3形式のファイルのみアップロードできます").removeClass("d-none");
+            return;
+        }
+
         const formData = new FormData(this);
         $.ajax({
             url: "/api/song/play/upload",
