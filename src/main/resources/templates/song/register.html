@@ -206,7 +206,6 @@
                 contentType: "application/json",
                 data: JSON.stringify({ title, note, bpm, beatId, structures }),
                 success: function (data) {
-                    alert(xhr.responseJSON?.message);
                     window.location.href = data.redirect;
                 },
                 error: function (xhr) {
