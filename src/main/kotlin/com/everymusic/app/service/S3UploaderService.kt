@@ -7,9 +7,13 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
+import software.amazon.awssdk.services.s3.presigner.S3Presigner
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest
 import java.net.URI
 import java.nio.file.Files
+import java.time.Duration
 import java.util.*
 
 @Service
@@ -61,9 +65,34 @@ class S3UploaderService {
 
     fun getPublicUrl(s3Key: String): String {
         return if (useMinio) {
-            "$endpoint/$bucket/$s3Key"
+            "$endpoint/$bucket/$s3Key"  // ローカル（MinIO）の場合は直接アクセス
         } else {
-            "https://$bucket.s3.${region.id()}.amazonaws.com/$s3Key"
+            val presigner = S3Presigner.builder()
+                .region(region)
+                .credentialsProvider(
+                    StaticCredentialsProvider.create(
+                        AwsBasicCredentials.create(
+                            dotenv["AWS_ACCESS_KEY_ID"],
+                            dotenv["AWS_SECRET_ACCESS_KEY"]
+                        )
+                    )
+                )
+                .build()
+
+            val getObjectRequest = GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(s3Key)
+                .build()
+
+            val presignRequest = GetObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofMinutes(15))
+                .getObjectRequest(getObjectRequest)
+                .build()
+
+            val presignedUrl = presigner.presignGetObject(presignRequest).url().toString()
+
+            presigner.close()
+            presignedUrl
         }
     }
 }
