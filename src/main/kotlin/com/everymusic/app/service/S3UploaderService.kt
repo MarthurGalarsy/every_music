@@ -17,10 +17,19 @@ class S3UploaderService {
 
     private val dotenv = dotenv()
     private val region = Region.of(dotenv["AWS_REGION"])
-    val endpoint = dotenv["S3_ENDPOINT"] ?: "http://localhost:9000"
+    private val bucket = dotenv["S3_BUCKET_NAME"]
+
+    // 任意指定された場合のみ MinIO とみなす
+    private val endpoint = dotenv["S3_ENDPOINT"]
+    private val useMinio = !endpoint.isNullOrBlank()
 
     private val s3: S3Client = S3Client.builder()
-        .endpointOverride(URI.create(endpoint))
+        .apply {
+            if (useMinio) {
+                endpointOverride(URI.create(endpoint))
+                forcePathStyle(true)
+            }
+        }
         .region(region)
         .credentialsProvider(
             StaticCredentialsProvider.create(
@@ -30,10 +39,7 @@ class S3UploaderService {
                 )
             )
         )
-        .forcePathStyle(true) // ← MinIOでは必要
         .build()
-
-    private val bucket = dotenv["S3_BUCKET_NAME"]
 
     fun upload(file: MultipartFile): String {
         val tempFile = Files.createTempFile(UUID.randomUUID().toString(), file.originalFilename?.substringAfterLast(".")).toFile()
@@ -48,15 +54,16 @@ class S3UploaderService {
             .build()
 
         s3.putObject(putRequest, tempFile.toPath())
-
         tempFile.delete()
 
-        return key // DB登録時などに使用
+        return key
     }
 
     fun getPublicUrl(s3Key: String): String {
-        val bucket = dotenv["S3_BUCKET_NAME"]
-        val endpoint = dotenv["S3_ENDPOINT"]
-        return "$endpoint/$bucket/$s3Key"
+        return if (useMinio) {
+            "$endpoint/$bucket/$s3Key"
+        } else {
+            "https://$bucket.s3.${region.id()}.amazonaws.com/$s3Key"
+        }
     }
 }
