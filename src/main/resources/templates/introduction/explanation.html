@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>使い方動画一覧</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+        .video-section {
+            margin-bottom: 40px;
+        }
+        .video-section h5 {
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        .video-wrapper {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+        }
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .back-btn {
+            display: block;
+            width: 100%;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>使い方動画一覧</h2>
+
+    <div class="video-section">
+        <h5>新規登録</h5>
+        <div class="video-wrapper">
+            <iframe src="https://www.youtube.com/embed/6THZ-aaYSlI" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <div class="video-section">
+        <h5>曲の投稿</h5>
+        <div class="video-wrapper">
+            <iframe src="https://www.youtube.com/embed/_ang_lpJmW8" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <div class="video-section">
+        <h5>演奏動画のアップロード</h5>
+        <div class="video-wrapper">
+            <iframe src="https://www.youtube.com/embed/wteHNGiQzIA" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <div class="video-section">
+        <h5>曲の再生</h5>
+        <div class="video-wrapper">
+            <iframe src="https://www.youtube.com/embed/ztv32Gjv2JU" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <a href="javascript:history.back()" class="btn btn-outline-secondary back-btn">戻る</a>
+</div>
+</body>
+</html>
