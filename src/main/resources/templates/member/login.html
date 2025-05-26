@@ -7,38 +7,86 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         body {
-            background-color: #f4f6f8;
+            background-color: #ffffff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #2c3e50;
+        }
+        header {
+            background-color: #ffffff;
+            padding: 20px;
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            color: #f39c12;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         }
         .login-container {
             max-width: 400px;
-            margin: 80px auto;
+            margin: 40px auto;
             padding: 30px;
             background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
         }
         h2 {
             font-weight: 600;
             margin-bottom: 30px;
+            text-align: center;
+            color: #2c3e50;
         }
         .form-control {
-            border-radius: 8px;
+            border-radius: 10px;
         }
         .btn-primary {
             width: 100%;
-            border-radius: 8px;
+            border-radius: 10px;
         }
         .register-link {
             display: block;
             margin-top: 15px;
             text-align: center;
+            color: #34495e;
+            font-weight: 500;
+        }
+        .description {
+            max-width: 800px;
+            margin: 40px auto;
+            background-color: #fff9e6;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+        }
+        .description h4 {
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #d35400;
+            text-align: center;
+        }
+        .description ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .description li::before {
+            content: '🎶';
+            margin-right: 10px;
+            color: #e67e22;
+        }
+        .description p {
+            font-size: 15px;
+            margin-bottom: 25px;
+            background-color: #fff3cd;
+            padding: 15px;
+            border-left: 5px solid #f39c12;
+            border-radius: 8px;
         }
     </style>
 </head>
 <body>
+<header>
+    みんなで音楽！Every music
+</header>
 <div class="login-container">
-    <h2 class="text-center">ログイン</h2>
+    <h2>ログイン</h2>
     <form id="login-form">
         <div class="mb-3">
             <label for="mailAddress" class="form-label">メールアドレス</label>
@@ -54,6 +102,30 @@
     <a class="register-link" th:href="@{/introduction}">使い方はこちら</a>
     <div id="error-message" class="alert alert-danger mt-3 d-none"></div>
 </div>
+
+<div class="description">
+    <h4>🎶このアプリの楽しみ方🎶</h4>
+    <ul>
+        <li>曲を思いついたけど得意な楽器しか弾けない！</li>
+        <li>思いついた曲に新しいアイデアが欲しい！</li>
+    </ul>
+    <p>曲のコード進行をアップロードしてみんなに演奏をアップロードしてもらおう！<br>
+        新しいアイデアや自分では弾けない楽器もみんなに弾いて貰えば曲になる！</p>
+
+    <ul>
+        <li>曲を作ったけどバンドメンバーがどんなアレンジしてくるか分からない！</li>
+        <li>いくつかアレンジを思いついたけど、どれが良いかバンドメンバーに聴いてもらいたい！</li>
+    </ul>
+    <p>バンドメンバーそれぞれで演奏をアップロードしてスタジオ前の意識合わせに！<br>
+        何パターンも聴いてもらって曲作りの役に立てよう！</p>
+
+    <ul>
+        <li>新しい音楽を聴きたい！</li>
+    </ul>
+    <p>投稿された曲、演奏を好きに組み合わせて聴いてみよう！<br>
+        もしかしたら奇跡の１曲が再生されるかも！？</p>
+</div>
+
 <script>
     $("#login-form").on("submit", function(e) {
         e.preventDefault();
