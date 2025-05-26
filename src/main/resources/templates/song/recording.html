@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>演奏録音</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            background-color: #f4f6f8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .recording-container {
+            max-width: 800px;
+            margin: 60px auto;
+            padding: 30px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+        .form-control, .form-select {
+            border-radius: 8px;
+        }
+        .section-block {
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .chord-box {
+            display: inline-block;
+            margin-right: 15px;
+            padding: 8px 12px;
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="recording-container">
+    <h2 th:text="${song.title} + ' の演奏録音'"></h2>
+    <strong>説明：</strong> <span th:text="${song.note}"></span><br />
+    <p><strong>BPM：</strong><span th:text="${song.bpm}"></span></p>
+    <p><strong>拍子：</strong><span th:text="${song.beat}"></span></p>
+
+    <h4 class="mt-4">曲構成</h4>
+    <div th:each="structure : ${structures}" class="section-block">
+        <h5 th:text="${structure.sectionName}" class="mb-3"></h5>
+        <div>
+            <div th:each="chord : ${structure.chords}" class="chord-box">
+                <div th:text="'コード: ' + ${chord.chord}"></div>
+                <div th:text="'小節数: ' + ${chord.measureNum}"></div>
+            </div>
+        </div>
+    </div>
+
+    <p class="text-danger mt-3">
+        演奏は曲の1小節分の空白時間（BPM=150、4/4拍子であれば BPM150でクリック音4個分）を設けて１曲分録音してください。
+    </p>
+
+    <form id="record-form">
+        <input type="hidden" name="songId" th:value="${song.id}" />
+
+        <div class="mb-3">
+            <label class="form-label">楽器</label>
+            <select class="form-select" name="instrumentId">
+                <option th:each="ins : ${instruments}" th:value="${ins.id}" th:text="${ins.name}"></option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">演奏タイトル</label>
+            <input type="text" class="form-control" name="playTitle" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">説明</label>
+            <input type="text" class="form-control" name="playNote" required>
+        </div>
+
+        <div class="mb-3">
+            <button type="button" id="start-record" class="btn btn-outline-primary me-2">🎤 録音開始</button>
+            <button type="button" id="stop-record" class="btn btn-outline-secondary me-2" disabled>⏹ 録音停止</button>
+            <button type="button" id="play-preview" class="btn btn-outline-success me-2" disabled>▶️ プレビュー</button>
+            <button type="button" id="stop-preview" class="btn btn-outline-secondary me-2" disabled>⏹ プレビュー停止</button>
+        </div>
+
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary" id="upload-button" disabled>⬆️ 投稿</button>
+            <a class="btn btn-outline-secondary" th:href="@{'/song/detail/' + ${song.id}}">戻る</a>
+        </div>
+    </form>
+    <div id="error-message" class="alert alert-danger mt-3 d-none"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.0/lame.min.js"></script>
+<script>
+    let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    let audioData = [];
+    let recorderNode;
+    let stream;
+    let source;
+    let mp3Blob;
+    let audioUrl;
+    let audio;
+    let clickTimer = null;
+
+    const click = new Audio('/click.mp3');
+
+    function playClickLoop(bpm) {
+        const interval = 60000 / bpm;
+        clickTimer = setInterval(() => {
+            click.currentTime = 0;
+            click.play();
+        }, interval);
+    }
+
+    function stopClickLoop() {
+        if (clickTimer) {
+            clearInterval(clickTimer);
+            clickTimer = null;
+        }
+    }
+
+    function floatTo16BitPCM(float32Array) {
+        const int16Array = new Int16Array(float32Array.length);
+        for (let i = 0; i < float32Array.length; i++) {
+            let s = Math.max(-1, Math.min(1, float32Array[i]));
+            int16Array[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+        }
+        return int16Array;
+    }
+
+    $("#start-record").on("click", async function () {
+        const bpm = parseInt($("span[th\\:text='${song.bpm}']").text()) || 150;
+        playClickLoop(bpm);
+
+        audioData = [];
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        source = audioContext.createMediaStreamSource(stream);
+
+        await audioContext.audioWorklet.addModule('/js/recorder-worklet.js');
+        recorderNode = new AudioWorkletNode(audioContext, 'recorder-processor');
+
+        recorderNode.port.onmessage = e => {
+            const chunk = new Float32Array(e.data);
+            audioData.push(chunk);
+        };
+
+        source.connect(recorderNode);
+
+        $("#start-record").prop("disabled", true);
+        $("#stop-record").prop("disabled", false);
+    });
+
+    $("#stop-record").on("click", function () {
+        stopClickLoop();
+        source.disconnect();
+        recorderNode.disconnect();
+
+        const totalLength = audioData.reduce((sum, a) => sum + a.length, 0);
+        const flat = new Float32Array(totalLength);
+        let offset = 0;
+        for (const chunk of audioData) {
+            flat.set(chunk, offset);
+            offset += chunk.length;
+        }
+
+        const int16Samples = floatTo16BitPCM(flat);
+        const mp3encoder = new lamejs.Mp3Encoder(1, audioContext.sampleRate, 128);
+        const blockSize = 1152;
+        const mp3Data = [];
+
+        for (let i = 0; i < int16Samples.length; i += blockSize) {
+            const chunk = int16Samples.subarray(i, i + blockSize);
+            const mp3buf = mp3encoder.encodeBuffer(chunk);
+            if (mp3buf.length > 0) mp3Data.push(mp3buf);
+        }
+        const end = mp3encoder.flush();
+        if (end.length > 0) mp3Data.push(end);
+
+        mp3Blob = new Blob(mp3Data, { type: 'audio/mp3' });
+        audioUrl = URL.createObjectURL(mp3Blob);
+        audio = new Audio(audioUrl);
+
+        $("#play-preview, #upload-button, #stop-preview").prop("disabled", false);
+        $("#stop-record").prop("disabled", true);
+    });
+
+    $("#play-preview").on("click", function () {
+        if (audio) audio.play();
+    });
+
+    $("#stop-preview").on("click", function () {
+        if (audio) {
+            audio.pause();
+            audio.currentTime = 0;
+        }
+    });
+
+    $("#record-form").on("submit", function (e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        formData.append("file", mp3Blob, "recorded.mp3");
+        $.ajax({
+            url: "/api/song/play/upload",
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false
+        }).done(data => {
+            window.location.href = data.redirect;
+        }).fail(err => {
+            $("#error-message").text(err.responseJSON?.message || "アップロードに失敗しました").removeClass("d-none");
+        });
+    });
+</script>
+</body>
+</html>

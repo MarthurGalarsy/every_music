@@ -58,8 +58,8 @@
             <input type="text" class="form-control" name="playNote" required />
         </div>
 
-        <p>演奏は曲の1小節分の空白時間（BPM=150、4/4拍子であれば BPM150でクリック音4個分）を設けて１曲分録音してください。</p>
-        <p>演奏ファイルはmp3でアップロードしてください。</p>
+        <p class="text-danger mt-3">演奏は曲の1小節分の空白時間（BPM=150、4/4拍子であれば BPM150でクリック音4個分）を設けて１曲分録音してください。</p>
+        <p class="text-danger mt-3">演奏ファイルはmp3でアップロードしてください。</p>
 
         <div class="mb-3">
             <label class="form-label">演奏ファイル</label>
@@ -67,7 +67,7 @@
         </div>
 
         <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-primary">投稿</button>
+            <button type="submit" class="btn btn-primary">⬆️ 投稿</button>
             <a class="btn btn-outline-secondary" th:href="@{'/song/detail/' + ${song.id}}">戻る</a>
         </div>
     </form>
