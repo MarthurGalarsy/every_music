@@ -66,6 +66,7 @@
         演奏は曲の1小節分の空白時間（BPM=150、4/4拍子であれば BPM150でクリック音4個分）を設けて１曲分録音してください。
     </p>
 
+    <input type="hidden" id="playUrls" th:value="${#strings.arrayJoin(selectedUrls, ',')}" />
     <form id="record-form">
         <input type="hidden" name="songId" th:value="${song.id}" />
 
@@ -103,31 +104,44 @@
 
 <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.0/lame.min.js"></script>
 <script>
-    let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    let recordingContext = new AudioContext({ sampleRate: 44100 });
+    let playbackContext = new AudioContext({ sampleRate: 44100 });
+
     let audioData = [];
     let recorderNode;
+    let gainNode;
     let stream;
     let source;
     let mp3Blob;
     let audioUrl;
     let audio;
-    let clickTimer = null;
+    let accompSources = [];
 
-    const click = new Audio('/click.mp3');
-
-    function playClickLoop(bpm) {
-        const interval = 60000 / bpm;
-        clickTimer = setInterval(() => {
-            click.currentTime = 0;
-            click.play();
-        }, interval);
+    async function loadAccompaniment() {
+        accompSources = [];
+        const urls = ($('#playUrls').val() || '').split(',').filter(x => x);
+        for (const url of urls) {
+            const res = await fetch(url);
+            const buf = await res.arrayBuffer();
+            const audioBuf = await playbackContext.decodeAudioData(buf);
+            const source = playbackContext.createBufferSource();
+            source.buffer = audioBuf;
+            source.connect(playbackContext.destination);
+            accompSources.push(source);
+        }
     }
 
-    function stopClickLoop() {
-        if (clickTimer) {
-            clearInterval(clickTimer);
-            clickTimer = null;
+    function startAccompaniment(startTime) {
+        for (const source of accompSources) {
+            source.start(startTime);
         }
+    }
+
+    function stopAccompaniment() {
+        for (const source of accompSources) {
+            try { source.stop(); } catch (_) {}
+        }
+        accompSources = [];
     }
 
     function floatTo16BitPCM(float32Array) {
@@ -140,31 +154,43 @@
     }
 
     $("#start-record").on("click", async function () {
-        const bpm = parseInt($("span[th\\:text='${song.bpm}']").text()) || 150;
-        playClickLoop(bpm);
+        await loadAccompaniment();
+        const startTime = playbackContext.currentTime + 0.1;
+        startAccompaniment(startTime);
 
         audioData = [];
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        source = audioContext.createMediaStreamSource(stream);
+        stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+                echoCancellation: false,
+                noiseSuppression: false,
+                autoGainControl: false
+            }
+        });
 
-        await audioContext.audioWorklet.addModule('/js/recorder-worklet.js');
-        recorderNode = new AudioWorkletNode(audioContext, 'recorder-processor');
+        source = recordingContext.createMediaStreamSource(stream);
+        gainNode = recordingContext.createGain();
+        gainNode.gain.value = 1.5;
+
+        await recordingContext.audioWorklet.addModule('/js/recorder-worklet.js');
+        recorderNode = new AudioWorkletNode(recordingContext, 'recorder-processor');
 
         recorderNode.port.onmessage = e => {
             const chunk = new Float32Array(e.data);
             audioData.push(chunk);
         };
 
-        source.connect(recorderNode);
+        source.connect(gainNode);
+        gainNode.connect(recorderNode);
 
         $("#start-record").prop("disabled", true);
         $("#stop-record").prop("disabled", false);
     });
 
     $("#stop-record").on("click", function () {
-        stopClickLoop();
-        source.disconnect();
-        recorderNode.disconnect();
+        stopAccompaniment();
+        if (source) source.disconnect();
+        if (gainNode) gainNode.disconnect();
+        if (recorderNode) recorderNode.disconnect();
 
         const totalLength = audioData.reduce((sum, a) => sum + a.length, 0);
         const flat = new Float32Array(totalLength);
@@ -175,7 +201,7 @@
         }
 
         const int16Samples = floatTo16BitPCM(flat);
-        const mp3encoder = new lamejs.Mp3Encoder(1, audioContext.sampleRate, 128);
+        const mp3encoder = new lamejs.Mp3Encoder(1, 44100, 128);
         const blockSize = 1152;
         const mp3Data = [];
 
@@ -184,6 +210,7 @@
             const mp3buf = mp3encoder.encodeBuffer(chunk);
             if (mp3buf.length > 0) mp3Data.push(mp3buf);
         }
+
         const end = mp3encoder.flush();
         if (end.length > 0) mp3Data.push(end);
 
@@ -193,6 +220,7 @@
 
         $("#play-preview, #upload-button, #stop-preview").prop("disabled", false);
         $("#stop-record").prop("disabled", true);
+        $("#start-record").prop("disabled", false);
     });
 
     $("#play-preview").on("click", function () {

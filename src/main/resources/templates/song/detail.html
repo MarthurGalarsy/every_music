@@ -100,6 +100,11 @@
     <a th:href="@{'/song/play/upload/' + ${song.id}}" class="btn btn-outline-info">演奏投稿</a>
     <a href="/song/list" class="btn btn-outline-dark">戻る</a>
 </div>
+<form id="record-to-form" method="post" action="/song/recording/to">
+    <input type="hidden" name="songId" th:value="${song.id}" />
+    <div id="selected-urls-container"></div>
+    <button type="submit" class="btn btn-outline-info">録音へ（選択演奏付き）</button>
+</form>
 
 <script>
     let audioContext;
@@ -139,6 +144,23 @@
         }
         sources = [];
         audioContext = null;
+    });
+
+    document.getElementById("record-to-form").addEventListener("submit", function(e) {
+        const container = document.getElementById("selected-urls-container");
+        container.innerHTML = "";
+        const checkedRadios = document.querySelectorAll("#play-form input[type=radio]:checked");
+        checkedRadios.forEach(radio => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "urls";
+            input.value = radio.value;
+            container.appendChild(input);
+        });
+        if (checkedRadios.length === 0) {
+            alert("演奏を1つ以上選択してください。");
+            e.preventDefault();
+        }
     });
 </script>
 </body>
