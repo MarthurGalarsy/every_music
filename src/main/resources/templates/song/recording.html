@@ -62,10 +62,6 @@
         </div>
     </div>
 
-    <p class="text-danger mt-3">
-        演奏は曲の1小節分の空白時間（BPM=150、4/4拍子であれば BPM150でクリック音4個分）を設けて１曲分録音してください。
-    </p>
-
     <input type="hidden" id="playUrls" th:value="${#strings.arrayJoin(selectedUrls, ',')}" />
     <form id="record-form">
         <input type="hidden" name="songId" th:value="${song.id}" />
