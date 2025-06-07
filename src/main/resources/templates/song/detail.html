@@ -114,43 +114,57 @@
     $('#play-button').on('click', async function() {
         const urls = [];
         $('#play-form input[type=radio]:checked').each(function() {
-            urls.push($(this).val());
+            urls.push($(this).value);
         });
 
-        if (urls.length === 0) return;
+        if (urls.length === 0) {
+            alert("演奏を1つ以上選択してください。");
+            return;
+        }
 
+        // AudioContextを再生成（古いものが存在する場合は閉じる）
+        if (audioContext) {
+            try { audioContext.close(); } catch (_) {}
+        }
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        sources = await Promise.all(urls.map(async url => {
+        sources = [];
+
+        const buffers = await Promise.all(urls.map(async url => {
             const res = await fetch(url);
             const data = await res.arrayBuffer();
-            const buffer = await audioContext.decodeAudioData(data);
-            const source = audioContext.createBufferSource();
-            source.buffer = buffer;
-            source.connect(audioContext.destination);
-            return source;
+            return await audioContext.decodeAudioData(data);
         }));
 
         const startTime = audioContext.currentTime + 0.1;
-        sources.forEach(src => src.start(startTime));
+        buffers.forEach(buffer => {
+            const source = audioContext.createBufferSource();
+            source.buffer = buffer;
+            source.connect(audioContext.destination);
+            source.start(startTime);
+            sources.push(source);
+        });
     });
 
     $('#stop-button').on('click', function() {
-        if (sources && sources.length > 0) {
-            sources.forEach(src => {
-                try { src.stop(); } catch (e) {}
-            });
-        }
-        if (audioContext) {
-            try { audioContext.close(); } catch (e) {}
-        }
+        sources.forEach(src => {
+            try { src.stop(); } catch (_) {}
+        });
         sources = [];
-        audioContext = null;
+        if (audioContext) {
+            try { audioContext.close(); } catch (_) {}
+            audioContext = null;
+        }
     });
 
     document.getElementById("record-to-form").addEventListener("submit", function(e) {
         const container = document.getElementById("selected-urls-container");
         container.innerHTML = "";
         const checkedRadios = document.querySelectorAll("#play-form input[type=radio]:checked");
+        if (checkedRadios.length === 0) {
+            alert("演奏を1つ以上選択してください。");
+            e.preventDefault();
+            return;
+        }
         checkedRadios.forEach(radio => {
             const input = document.createElement("input");
             input.type = "hidden";
@@ -158,10 +172,6 @@
             input.value = radio.value;
             container.appendChild(input);
         });
-        if (checkedRadios.length === 0) {
-            alert("演奏を1つ以上選択してください。");
-            e.preventDefault();
-        }
     });
 </script>
 </body>
