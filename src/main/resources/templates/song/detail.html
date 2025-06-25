@@ -80,7 +80,7 @@
         <div class="scroll-box">
             <div class="ms-2" th:each="play : ${entry.value}" style="margin-bottom: 1rem;">
                 <label class="form-check-label d-block">
-                    <input type="radio" class="form-check-input me-2" th:name="'instrument_' + ${entry.key.id}" th:value="${play.audioUrl}" />
+                    <input type="radio" class="form-check-input me-2" th:name="'instrument_' + ${entry.key.id}" th:attr="value=${play.audioUrl}" />
                     <span th:text="${play.title}"></span>
                 </label>
                 <small class="text-muted d-block" th:text="${play.note}"></small>
@@ -111,13 +111,20 @@
     let audioContext;
     let sources = [];
 
-    $('#play-button').on('click', async function() {
-        const urls = [];
-        $('#play-form input[type=radio]:checked').each(function() {
-            urls.push($(this).val());
+    // 再生ボタン押下時に、選択中のS3キーをサーバに渡して署名付きURLを取得
+    $('#play-button').on('click', async function () {
+        const keys = [];
+        $('#play-form input[type=radio]:checked').each(function () {
+            let fullUrl = $(this).val();
+            fullUrl = fullUrl.replace(/^"+|"+$/g, '').replace(/^'|'$/g, '');
+            fullUrl = decodeURIComponent(fullUrl); // 念のためエンコードを戻す
+
+            // S3キー部分だけを抽出（/uploads/以降）
+            const keyMatch = fullUrl.match(/uploads\/.+/);
+            if (keyMatch) keys.push(keyMatch[0]);
         });
 
-        if (urls.length === 0) {
+        if (keys.length === 0) {
             alert("演奏を1つ以上選択してください。");
             return;
         }
@@ -129,23 +136,37 @@
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         sources = [];
 
-        const buffers = await Promise.all(urls.map(async url => {
-            const res = await fetch(url);
-            const data = await res.arrayBuffer();
-            return await audioContext.decodeAudioData(data);
-        }));
+        try {
+            const buffers = await Promise.all(keys.map(async key => {
+                const res = await fetch('/api/song/url', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key })
+                });
 
-        const startTime = audioContext.currentTime + 0.1;
-        buffers.forEach(buffer => {
-            const source = audioContext.createBufferSource();
-            source.buffer = buffer;
-            source.connect(audioContext.destination);
-            source.start(startTime);
-            sources.push(source);
-        });
+                if (!res.ok) throw new Error(`URL取得失敗: ${key}`);
+                const signedUrl = await res.text();
+
+                const audioRes = await fetch(signedUrl);
+                const arrayBuffer = await audioRes.arrayBuffer();
+                return await audioContext.decodeAudioData(arrayBuffer);
+            }));
+
+            const startTime = audioContext.currentTime + 0.1;
+            buffers.forEach(buffer => {
+                const source = audioContext.createBufferSource();
+                source.buffer = buffer;
+                source.connect(audioContext.destination);
+                source.start(startTime);
+                sources.push(source);
+            });
+        } catch (e) {
+            console.error("同期再生エラー:", e);
+            alert("再生に失敗しました。時間を置いてもう一度お試しください。");
+        }
     });
 
-    $('#stop-button').on('click', function() {
+    $('#stop-button').on('click', function () {
         sources.forEach(src => {
             try { src.stop(); } catch (_) {}
         });
@@ -156,7 +177,7 @@
         }
     });
 
-    document.getElementById("record-to-form").addEventListener("submit", function(e) {
+    document.getElementById("record-to-form").addEventListener("submit", function (e) {
         const container = document.getElementById("selected-urls-container");
         container.innerHTML = "";
         const checkedRadios = document.querySelectorAll("#play-form input[type=radio]:checked");
