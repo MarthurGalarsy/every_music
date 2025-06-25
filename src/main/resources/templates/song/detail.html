@@ -111,20 +111,13 @@
     let audioContext;
     let sources = [];
 
-    // 再生ボタン押下時に、選択中のS3キーをサーバに渡して署名付きURLを取得
     $('#play-button').on('click', async function () {
-        const keys = [];
+        const urls = [];
         $('#play-form input[type=radio]:checked').each(function () {
-            let fullUrl = $(this).val();
-            fullUrl = fullUrl.replace(/^"+|"+$/g, '').replace(/^'|'$/g, '');
-            fullUrl = decodeURIComponent(fullUrl); // 念のためエンコードを戻す
-
-            // S3キー部分だけを抽出（/uploads/以降）
-            const keyMatch = fullUrl.match(/uploads\/.+/);
-            if (keyMatch) keys.push(keyMatch[0]);
+            urls.push($(this).val());
         });
 
-        if (keys.length === 0) {
+        if (urls.length === 0) {
             alert("演奏を1つ以上選択してください。");
             return;
         }
@@ -137,16 +130,21 @@
         sources = [];
 
         try {
-            const buffers = await Promise.all(keys.map(async key => {
+            const buffers = await Promise.all(urls.map(async fullUrl => {
+                // S3キーだけ抽出（例: uploads/xxx.mp3）
+                const match = fullUrl.match(/uploads\/[^?"]+/);
+                const key = match ? match[0] : null;
+                if (!key) throw new Error("S3キーの抽出に失敗しました");
+
                 const res = await fetch('/api/song/url', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ key })
                 });
 
-                if (!res.ok) throw new Error(`URL取得失敗: ${key}`);
-                const { url: signedUrl } = await res.json();
-                const audioRes = await fetch(signedUrl);
+                if (!res.ok) throw new Error(`署名付きURL取得失敗: ${key}`);
+                const { url } = await res.json();
+                const audioRes = await fetch(url);
                 const arrayBuffer = await audioRes.arrayBuffer();
                 return await audioContext.decodeAudioData(arrayBuffer);
             }));
@@ -186,11 +184,16 @@
             return;
         }
         checkedRadios.forEach(radio => {
-            const input = document.createElement("input");
-            input.type = "hidden";
-            input.name = "urls";
-            input.value = radio.value;
-            container.appendChild(input);
+            const fullUrl = radio.value;
+            const match = fullUrl.match(/uploads\/[^?"]+/);
+            const key = match ? match[0] : null;
+            if (key) {
+                const input = document.createElement("input");
+                input.type = "hidden";
+                input.name = "urls";
+                input.value = key;
+                container.appendChild(input);
+            }
         });
     });
 </script>
