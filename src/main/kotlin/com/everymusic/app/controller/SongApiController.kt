@@ -1,6 +1,5 @@
 package com.everymusic.app.controller
 
-import com.everymusic.app.model.KeyRequest
 import com.everymusic.app.service.S3UploaderService
 import com.everymusic.app.service.SongService
 import jakarta.servlet.http.HttpSession
@@ -36,9 +35,10 @@ class SongApiController(
 
     @PostMapping("/url")
     fun getSignedUrl(
-        @RequestBody req: KeyRequest
-    ): ResponseEntity<String> {
-        val url = s3UploaderService.getPublicUrl(req.key)
-        return ResponseEntity.ok(url)
+        @RequestBody body: Map<String, String>
+    ): ResponseEntity<Map<String, String>> {
+        val key = body["key"] ?: return ResponseEntity.badRequest().build()
+        val url = s3UploaderService.getPublicUrl(key)
+        return ResponseEntity.ok(mapOf("url" to url))
     }
 }

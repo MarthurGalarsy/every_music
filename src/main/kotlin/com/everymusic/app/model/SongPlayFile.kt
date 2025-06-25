@@ -10,5 +10,3 @@ data class SongPlayFileInsert(
     val type: String,
     val s3Key: String
 )
-
-data class KeyRequest(val key: String)

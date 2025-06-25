@@ -145,8 +145,7 @@
                 });
 
                 if (!res.ok) throw new Error(`URL取得失敗: ${key}`);
-                const signedUrl = await res.text();
-
+                const { url: signedUrl } = await res.json();
                 const audioRes = await fetch(signedUrl);
                 const arrayBuffer = await audioRes.arrayBuffer();
                 return await audioContext.decodeAudioData(arrayBuffer);
