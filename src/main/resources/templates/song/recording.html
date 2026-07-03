@@ -12,23 +12,63 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         .recording-container {
-            max-width: 800px;
-            margin: 60px auto;
-            padding: 30px;
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 1180px;
+            margin: 32px auto;
+            padding: 0 16px 40px;
         }
-        h2 {
-            font-weight: 600;
-            margin-bottom: 30px;
+        .page-header {
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 22px;
+            margin-bottom: 18px;
+        }
+        .page-title {
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .song-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .meta-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid #ced4da;
+            border-radius: 999px;
+            padding: 6px 12px;
+            background-color: #f8f9fa;
+            color: #343a40;
+            font-size: 0.9rem;
+        }
+        .recording-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
+            gap: 18px;
+            align-items: start;
+        }
+        .panel {
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .panel + .panel {
+            margin-top: 18px;
+        }
+        .panel-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 14px;
         }
         .form-control, .form-select {
             border-radius: 8px;
         }
         .section-block {
             padding: 15px;
-            border-left: 4px solid #007bff;
+            border-left: 4px solid #198754;
             margin-bottom: 20px;
             background-color: #f8f9fa;
             border-radius: 8px;
@@ -45,73 +85,137 @@
         .recording-status {
             min-height: 3rem;
         }
+        .control-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .control-group .btn {
+            min-width: 9rem;
+        }
+        .recording-action {
+            min-height: 3rem;
+        }
+        .hint-list {
+            margin-bottom: 0;
+            padding-left: 1.1rem;
+            color: #495057;
+        }
+        @media (max-width: 900px) {
+            .recording-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
 <div class="recording-container">
-    <h2 th:text="${song.title} + ' の演奏録音'"></h2>
-    <strong>説明：</strong> <span th:text="${song.note}"></span><br />
-    <p><strong>BPM：</strong><span th:text="${song.bpm}"></span></p>
-    <p><strong>拍子：</strong><span th:text="${song.beat}"></span></p>
-
-    <h4 class="mt-4">曲構成</h4>
-    <div th:each="structure : ${structures}" class="section-block">
-        <h5 th:text="${structure.sectionName}" class="mb-3"></h5>
-        <div>
-            <div th:each="chord : ${structure.chords}" class="chord-box">
-                <div th:text="'コード: ' + ${chord.chord}"></div>
-                <div th:text="'小節数: ' + ${chord.measureNum}"></div>
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+            <div>
+                <h2 class="page-title" th:text="${song.title} + ' の演奏録音'"></h2>
+                <div class="text-muted mb-3" th:text="${song.note}"></div>
+                <div class="song-meta">
+                    <span class="meta-badge"><strong>BPM</strong><span th:text="${song.bpm}"></span></span>
+                    <span class="meta-badge"><strong>拍子</strong><span th:text="${song.beat}"></span></span>
+                </div>
             </div>
+            <a class="btn btn-outline-secondary" th:href="@{'/song/detail/' + ${song.id}}">曲詳細へ戻る</a>
         </div>
     </div>
 
-    <input type="hidden" id="playUrls" th:value="${#strings.arrayJoin(selectedUrls, ',')}" />
-    <form id="record-form">
-        <input type="hidden" name="songId" th:value="${song.id}" />
+    <div class="recording-grid">
+        <div>
+            <section class="panel">
+                <h4 class="panel-title">曲構成</h4>
+                <div th:each="structure : ${structures}" class="section-block">
+                    <h5 th:text="${structure.sectionName}" class="mb-3"></h5>
+                    <div>
+                        <div th:each="chord : ${structure.chords}" class="chord-box">
+                            <div th:text="'コード: ' + ${chord.chord}"></div>
+                            <div th:text="'小節数: ' + ${chord.measureNum}"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-        <div class="mb-3">
-            <label class="form-label">楽器</label>
-            <select class="form-select" name="instrumentId">
-                <option th:each="ins : ${instruments}" th:value="${ins.id}" th:text="${ins.name}"></option>
-            </select>
+            <section class="panel">
+                <h4 class="panel-title">録音時のポイント</h4>
+                <ul class="hint-list">
+                    <li>メトロノームは曲のBPMに合わせて鳴ります。</li>
+                    <li>伴奏を選んで録音画面へ来た場合は、録音開始と同時に再生されます。</li>
+                    <li>スピーカーの音をマイクが拾う場合はヘッドホンを使うと録音しやすくなります。</li>
+                </ul>
+            </section>
         </div>
 
-        <div class="mb-3">
-            <label class="form-label">演奏タイトル</label>
-            <input type="text" class="form-control" name="playTitle" required>
-        </div>
+        <div>
+            <input type="hidden" id="playUrls" th:value="${#strings.arrayJoin(selectedUrls, ',')}" />
+            <form id="record-form">
+                <input type="hidden" name="songId" th:value="${song.id}" />
 
-        <div class="mb-3">
-            <label class="form-label">説明</label>
-            <input type="text" class="form-control" name="playNote" required>
-        </div>
+                <section class="panel">
+                    <h4 class="panel-title">録音設定</h4>
+                    <div class="mb-3">
+                        <label class="form-label">楽器</label>
+                        <select class="form-select" name="instrumentId">
+                            <option th:each="ins : ${instruments}" th:value="${ins.id}" th:text="${ins.name}"></option>
+                        </select>
+                    </div>
 
-        <div class="mb-3">
-            <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" id="recording-click" checked>
-                <label class="form-check-label" for="recording-click">録音中にメトロノームを鳴らす</label>
-            </div>
-            <button type="button" id="start-metronome" class="btn btn-outline-dark me-2">メトロノーム再生</button>
-            <button type="button" id="stop-metronome" class="btn btn-outline-secondary me-2" disabled>メトロノーム停止</button>
-        </div>
+                    <div class="mb-3">
+                        <label class="form-label">演奏タイトル</label>
+                        <input type="text" class="form-control" name="playTitle" required>
+                    </div>
 
-        <div class="mb-3">
-            <button type="button" id="start-record" class="btn btn-outline-primary me-2">🎤 録音開始</button>
-            <button type="button" id="stop-record" class="btn btn-outline-secondary me-2" disabled>⏹ 録音停止</button>
-            <button type="button" id="play-preview" class="btn btn-outline-success me-2" disabled>▶️ プレビュー</button>
-            <button type="button" id="stop-preview" class="btn btn-outline-secondary me-2" disabled>⏹ プレビュー停止</button>
-        </div>
+                    <div class="mb-0">
+                        <label class="form-label">説明</label>
+                        <input type="text" class="form-control" name="playNote" required>
+                    </div>
+                </section>
 
-        <div id="recording-status" class="alert alert-info recording-status">
-            メトロノームを確認してから録音できます。録音開始後は1小節カウントしてから演奏してください。
-        </div>
+                <section class="panel">
+                    <h4 class="panel-title">メトロノーム</h4>
+                    <div class="mb-3">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="recording-click" checked>
+                            <label class="form-check-label" for="recording-click">録音中にメトロノームを鳴らす</label>
+                        </div>
+                        <div class="control-group">
+                            <button type="button" id="start-metronome" class="btn btn-outline-dark">メトロノーム再生</button>
+                            <button type="button" id="stop-metronome" class="btn btn-outline-secondary" disabled>停止</button>
+                        </div>
+                    </div>
+                    <div class="song-meta">
+                        <span class="meta-badge"><strong>BPM</strong><span th:text="${song.bpm}"></span></span>
+                        <span class="meta-badge"><strong>拍子</strong><span th:text="${song.beat}"></span></span>
+                    </div>
+                </section>
 
-        <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-primary" id="upload-button" disabled>⬆️ 投稿</button>
-            <a class="btn btn-outline-secondary" th:href="@{'/song/detail/' + ${song.id}}">戻る</a>
+                <section class="panel">
+                    <h4 class="panel-title">録音操作</h4>
+                    <div class="control-group mb-3">
+                        <button type="button" id="start-record" class="btn btn-primary recording-action">録音開始</button>
+                        <button type="button" id="stop-record" class="btn btn-outline-secondary recording-action" disabled>録音停止</button>
+                    </div>
+                    <div class="control-group mb-3">
+                        <button type="button" id="play-preview" class="btn btn-outline-success" disabled>プレビュー再生</button>
+                        <button type="button" id="stop-preview" class="btn btn-outline-secondary" disabled>プレビュー停止</button>
+                    </div>
+
+                    <div id="recording-status" class="alert alert-info recording-status">
+                        メトロノームを確認してから録音できます。録音開始後は1小節カウントしてから演奏してください。
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success" id="upload-button" disabled>投稿</button>
+                        <a class="btn btn-outline-secondary" th:href="@{'/song/detail/' + ${song.id}}">戻る</a>
+                    </div>
+                </section>
+            </form>
+            <div id="error-message" class="alert alert-danger mt-3 d-none"></div>
         </div>
-    </form>
-    <div id="error-message" class="alert alert-danger mt-3 d-none"></div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.0/lame.min.js"></script>

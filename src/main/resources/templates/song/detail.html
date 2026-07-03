@@ -173,8 +173,10 @@
 <form id="record-to-form" method="post" action="/song/recording/to">
     <input type="hidden" name="songId" th:value="${song.id}" />
     <div id="selected-urls-container"></div>
-    録音機能は現状おまけ程度です。
-    <button type="submit" class="btn btn-outline-info">録音へ</button>
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+        <span class="text-muted">画面上でメトロノームに合わせて録音できます。</span>
+        <button type="submit" class="btn btn-outline-info">画面録音へ</button>
+    </div>
 </form>
 
 <div class="modal fade" id="comment-modal" tabindex="-1" aria-hidden="true">
