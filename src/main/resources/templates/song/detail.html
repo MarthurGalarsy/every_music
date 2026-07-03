@@ -174,7 +174,7 @@
     <input type="hidden" name="songId" th:value="${song.id}" />
     <div id="selected-urls-container"></div>
     録音機能は現状おまけ程度です。
-    <button type="submit" class="btn btn-outline-info">録音へ（選択演奏付き）</button>
+    <button type="submit" class="btn btn-outline-info">録音へ</button>
 </form>
 
 <div class="modal fade" id="comment-modal" tabindex="-1" aria-hidden="true">
@@ -371,11 +371,6 @@
         const container = document.getElementById("selected-urls-container");
         container.innerHTML = "";
         const checkedRadios = document.querySelectorAll("#play-form input[type=radio]:checked");
-        if (checkedRadios.length === 0) {
-            alert("演奏を1つ以上選択してください。");
-            e.preventDefault();
-            return;
-        }
         checkedRadios.forEach(radio => {
             const fullUrl = radio.value;
             const match = fullUrl.match(/uploads\/[^?"]+/);

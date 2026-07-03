@@ -42,6 +42,9 @@
             border-radius: 6px;
             margin-bottom: 10px;
         }
+        .recording-status {
+            min-height: 3rem;
+        }
     </style>
 </head>
 <body>
@@ -84,10 +87,23 @@
         </div>
 
         <div class="mb-3">
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="recording-click" checked>
+                <label class="form-check-label" for="recording-click">録音中にメトロノームを鳴らす</label>
+            </div>
+            <button type="button" id="start-metronome" class="btn btn-outline-dark me-2">メトロノーム再生</button>
+            <button type="button" id="stop-metronome" class="btn btn-outline-secondary me-2" disabled>メトロノーム停止</button>
+        </div>
+
+        <div class="mb-3">
             <button type="button" id="start-record" class="btn btn-outline-primary me-2">🎤 録音開始</button>
             <button type="button" id="stop-record" class="btn btn-outline-secondary me-2" disabled>⏹ 録音停止</button>
             <button type="button" id="play-preview" class="btn btn-outline-success me-2" disabled>▶️ プレビュー</button>
             <button type="button" id="stop-preview" class="btn btn-outline-secondary me-2" disabled>⏹ プレビュー停止</button>
+        </div>
+
+        <div id="recording-status" class="alert alert-info recording-status">
+            メトロノームを確認してから録音できます。録音開始後は1小節カウントしてから演奏してください。
         </div>
 
         <div class="d-grid gap-2">
@@ -99,38 +115,151 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.0/lame.min.js"></script>
+<script th:inline="javascript">
+    const songBpm = Number([[${song.bpm}]]);
+    const songBeat = [[${song.beat}]];
+</script>
 <script>
-    let recordingContext = new AudioContext({ sampleRate: 44100 });
-    let playbackContext = new AudioContext({ sampleRate: 44100 });
-
+    let audioContext;
+    let workletLoaded = false;
     let audioData = [];
     let recorderNode;
     let gainNode;
+    let silentNode;
     let stream;
-    let source;
+    let micSource;
     let mp3Blob;
     let audioUrl;
     let audio;
     let accompSources = [];
+    let accompBuffers = [];
+    let metronomeTimer;
+    let nextClickTime = 0;
+    let clickIndex = 0;
+    let metronomeStopBeat = null;
+    let recordingActive = false;
+
+    function showStatus(message, type = "info") {
+        $("#recording-status")
+            .removeClass("alert-info alert-success alert-warning alert-danger")
+            .addClass(`alert-${type}`)
+            .text(message);
+    }
+
+    function showError(message) {
+        $("#error-message").text(message).removeClass("d-none");
+        showStatus(message, "danger");
+    }
+
+    function clearError() {
+        $("#error-message").addClass("d-none").text("");
+    }
+
+    function getBeatsPerMeasure() {
+        const match = String(songBeat || "").match(/^(\d+)\/\d+/);
+        return match ? Number(match[1]) : 4;
+    }
+
+    function getSecondsPerBeat() {
+        return 60 / songBpm;
+    }
+
+    async function ensureAudioContext() {
+        if (!audioContext || audioContext.state === "closed") {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
+            workletLoaded = false;
+        }
+        if (audioContext.state === "suspended") {
+            await audioContext.resume();
+        }
+        if (!workletLoaded) {
+            await audioContext.audioWorklet.addModule('/js/recorder-worklet.js');
+            workletLoaded = true;
+        }
+        return audioContext;
+    }
+
+    function scheduleClick(time, accented) {
+        const oscillator = audioContext.createOscillator();
+        const clickGain = audioContext.createGain();
+        oscillator.frequency.value = accented ? 1200 : 820;
+        clickGain.gain.setValueAtTime(0.0001, time);
+        clickGain.gain.exponentialRampToValueAtTime(accented ? 0.55 : 0.35, time + 0.005);
+        clickGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.07);
+        oscillator.connect(clickGain);
+        clickGain.connect(audioContext.destination);
+        oscillator.start(time);
+        oscillator.stop(time + 0.08);
+    }
+
+    function startMetronomeAt(startTime, totalBeats = null) {
+        stopMetronome();
+        const beatsPerMeasure = getBeatsPerMeasure();
+        const secondsPerBeat = getSecondsPerBeat();
+        nextClickTime = startTime;
+        clickIndex = 0;
+        metronomeStopBeat = totalBeats;
+
+        metronomeTimer = window.setInterval(() => {
+            while (nextClickTime < audioContext.currentTime + 0.15) {
+                if (metronomeStopBeat !== null && clickIndex >= metronomeStopBeat) {
+                    stopMetronome();
+                    return;
+                }
+                scheduleClick(nextClickTime, clickIndex % beatsPerMeasure === 0);
+                nextClickTime += secondsPerBeat;
+                clickIndex += 1;
+            }
+        }, 25);
+
+        $("#start-metronome").prop("disabled", true);
+        $("#stop-metronome").prop("disabled", false);
+    }
+
+    function stopMetronome() {
+        if (metronomeTimer) {
+            window.clearInterval(metronomeTimer);
+            metronomeTimer = null;
+        }
+        $("#start-metronome").prop("disabled", false);
+        $("#stop-metronome").prop("disabled", true);
+    }
 
     async function loadAccompaniment() {
-        accompSources = [];
+        accompBuffers = [];
         const urls = ($('#playUrls').val() || '').split(',').filter(x => x);
         for (const url of urls) {
-            const res = await fetch(url);
+            const audioUrl = await resolveAudioUrl(url);
+            const res = await fetch(audioUrl);
+            if (!res.ok) throw new Error("伴奏音源の取得に失敗しました");
             const buf = await res.arrayBuffer();
-            const audioBuf = await playbackContext.decodeAudioData(buf);
-            const source = playbackContext.createBufferSource();
-            source.buffer = audioBuf;
-            source.connect(playbackContext.destination);
-            accompSources.push(source);
+            const audioBuf = await audioContext.decodeAudioData(buf);
+            accompBuffers.push(audioBuf);
         }
     }
 
+    async function resolveAudioUrl(value) {
+        if (/^https?:\/\//.test(value)) return value;
+
+        const res = await fetch('/api/song/url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: value })
+        });
+        if (!res.ok) throw new Error("伴奏音源のURL取得に失敗しました");
+        const { url } = await res.json();
+        return url;
+    }
+
     function startAccompaniment(startTime) {
-        for (const source of accompSources) {
+        stopAccompaniment();
+        accompSources = accompBuffers.map(audioBuf => {
+            const source = audioContext.createBufferSource();
+            source.buffer = audioBuf;
+            source.connect(audioContext.destination);
             source.start(startTime);
-        }
+            return source;
+        });
     }
 
     function stopAccompaniment() {
@@ -149,46 +278,36 @@
         return int16Array;
     }
 
-    $("#start-record").on("click", async function () {
-        await loadAccompaniment();
-        const startTime = playbackContext.currentTime + 0.1;
-        startAccompaniment(startTime);
+    function cleanupRecorder() {
+        recordingActive = false;
+        if (micSource) {
+            try { micSource.disconnect(); } catch (_) {}
+            micSource = null;
+        }
+        if (gainNode) {
+            try { gainNode.disconnect(); } catch (_) {}
+            gainNode = null;
+        }
+        if (recorderNode) {
+            try { recorderNode.disconnect(); } catch (_) {}
+            recorderNode = null;
+        }
+        if (silentNode) {
+            try { silentNode.disconnect(); } catch (_) {}
+            silentNode = null;
+        }
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+    }
 
-        audioData = [];
-        stream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-                echoCancellation: false,
-                noiseSuppression: false,
-                autoGainControl: false
-            }
-        });
-
-        source = recordingContext.createMediaStreamSource(stream);
-        gainNode = recordingContext.createGain();
-        gainNode.gain.value = 1.5;
-
-        await recordingContext.audioWorklet.addModule('/js/recorder-worklet.js');
-        recorderNode = new AudioWorkletNode(recordingContext, 'recorder-processor');
-
-        recorderNode.port.onmessage = e => {
-            const chunk = new Float32Array(e.data);
-            audioData.push(chunk);
-        };
-
-        source.connect(gainNode);
-        gainNode.connect(recorderNode);
-
-        $("#start-record").prop("disabled", true);
-        $("#stop-record").prop("disabled", false);
-    });
-
-    $("#stop-record").on("click", function () {
-        stopAccompaniment();
-        if (source) source.disconnect();
-        if (gainNode) gainNode.disconnect();
-        if (recorderNode) recorderNode.disconnect();
-
+    function buildMp3Blob() {
         const totalLength = audioData.reduce((sum, a) => sum + a.length, 0);
+        if (totalLength === 0) {
+            throw new Error("録音データがありません");
+        }
+
         const flat = new Float32Array(totalLength);
         let offset = 0;
         for (const chunk of audioData) {
@@ -196,8 +315,9 @@
             offset += chunk.length;
         }
 
+        const sampleRate = audioContext.sampleRate || 44100;
         const int16Samples = floatTo16BitPCM(flat);
-        const mp3encoder = new lamejs.Mp3Encoder(1, 44100, 128);
+        const mp3encoder = new lamejs.Mp3Encoder(1, sampleRate, 128);
         const blockSize = 1152;
         const mp3Data = [];
 
@@ -210,17 +330,111 @@
         const end = mp3encoder.flush();
         if (end.length > 0) mp3Data.push(end);
 
-        mp3Blob = new Blob(mp3Data, { type: 'audio/mp3' });
-        audioUrl = URL.createObjectURL(mp3Blob);
-        audio = new Audio(audioUrl);
+        return new Blob(mp3Data, { type: 'audio/mp3' });
+    }
 
-        $("#play-preview, #upload-button, #stop-preview").prop("disabled", false);
-        $("#stop-record").prop("disabled", true);
-        $("#start-record").prop("disabled", false);
+    $("#start-record").on("click", async function () {
+        clearError();
+        try {
+            await ensureAudioContext();
+            stopMetronome();
+            stopAccompaniment();
+            cleanupRecorder();
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+            if (audioUrl) {
+                URL.revokeObjectURL(audioUrl);
+            }
+            mp3Blob = null;
+            audioUrl = null;
+            audio = null;
+            audioData = [];
+
+            showStatus("マイクを準備しています。ブラウザの許可が出たら許可してください。", "info");
+            stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    autoGainControl: false
+                }
+            });
+
+            showStatus("伴奏音源を準備しています。", "info");
+            await loadAccompaniment();
+
+            micSource = audioContext.createMediaStreamSource(stream);
+            gainNode = audioContext.createGain();
+            gainNode.gain.value = 1.5;
+            recorderNode = new AudioWorkletNode(audioContext, 'recorder-processor');
+            silentNode = audioContext.createGain();
+            silentNode.gain.value = 0;
+
+            recorderNode.port.onmessage = e => {
+                if (!recordingActive) return;
+                audioData.push(new Float32Array(e.data));
+            };
+
+            micSource.connect(gainNode);
+            gainNode.connect(recorderNode);
+            recorderNode.connect(silentNode);
+            silentNode.connect(audioContext.destination);
+
+            const beatsPerMeasure = getBeatsPerMeasure();
+            const startTime = audioContext.currentTime + 0.2;
+            const clickBeats = $("#recording-click").prop("checked") ? null : beatsPerMeasure;
+            window.setTimeout(() => {
+                recordingActive = true;
+            }, Math.max(0, (startTime - audioContext.currentTime) * 1000));
+
+            startMetronomeAt(startTime, clickBeats);
+            startAccompaniment(startTime);
+
+            $("#start-record, #start-metronome").prop("disabled", true);
+            $("#stop-record").prop("disabled", false);
+            $("#play-preview, #upload-button").prop("disabled", true);
+            showStatus(`${beatsPerMeasure}拍カウント後に演奏を開始してください。録音中です。`, "warning");
+        } catch (e) {
+            console.error(e);
+            stopMetronome();
+            stopAccompaniment();
+            cleanupRecorder();
+            $("#start-record").prop("disabled", false);
+            $("#stop-record").prop("disabled", true);
+            showError(e.message || "録音開始に失敗しました。");
+        }
+    });
+
+    $("#stop-record").on("click", function () {
+        stopAccompaniment();
+        stopMetronome();
+        try {
+            recordingActive = false;
+            cleanupRecorder();
+            mp3Blob = buildMp3Blob();
+            audioUrl = URL.createObjectURL(mp3Blob);
+            audio = new Audio(audioUrl);
+
+            $("#play-preview, #upload-button").prop("disabled", false);
+            $("#stop-preview").prop("disabled", true);
+            $("#stop-record").prop("disabled", true);
+            $("#start-record, #start-metronome").prop("disabled", false);
+            showStatus("録音が完了しました。プレビュー確認後に投稿できます。", "success");
+        } catch (e) {
+            console.error(e);
+            $("#play-preview, #upload-button, #stop-preview").prop("disabled", true);
+            $("#stop-record").prop("disabled", true);
+            $("#start-record, #start-metronome").prop("disabled", false);
+            showError(e.message || "録音データの作成に失敗しました。");
+        }
     });
 
     $("#play-preview").on("click", function () {
-        if (audio) audio.play();
+        if (audio) {
+            audio.play();
+            $("#stop-preview").prop("disabled", false);
+        }
     });
 
     $("#stop-preview").on("click", function () {
@@ -228,10 +442,33 @@
             audio.pause();
             audio.currentTime = 0;
         }
+        $("#stop-preview").prop("disabled", true);
+    });
+
+    $("#start-metronome").on("click", async function () {
+        clearError();
+        try {
+            await ensureAudioContext();
+            startMetronomeAt(audioContext.currentTime + 0.05);
+            showStatus(`${songBpm} BPM / ${songBeat} でメトロノームを再生中です。`, "info");
+        } catch (e) {
+            console.error(e);
+            showError(e.message || "メトロノーム再生に失敗しました。");
+        }
+    });
+
+    $("#stop-metronome").on("click", function () {
+        stopMetronome();
+        showStatus("メトロノームを停止しました。", "info");
     });
 
     $("#record-form").on("submit", function (e) {
         e.preventDefault();
+        clearError();
+        if (!mp3Blob) {
+            showError("録音してから投稿してください。");
+            return;
+        }
         const formData = new FormData(this);
         formData.append("file", mp3Blob, "recorded.mp3");
         $.ajax({
