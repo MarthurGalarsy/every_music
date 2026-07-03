@@ -15,13 +15,15 @@ class SongDetailService(
     private val structureMapper: SongStructureMapper,
     private val chordMapper: ChordProgressionMapper,
     private val songPlayMapper: SongPlayMapper,
-    private val songPlayFileMapper: SongPlayFileMapper
+    private val songPlayFileMapper: SongPlayFileMapper,
+    private val interactionService: InteractionService
 ) {
 
-    fun loadSongDetail(songId: Long): SongDetailView {
+    fun loadSongDetail(songId: Long, memberId: Long): SongDetailView {
         val song = songMapper.findById(songId) ?: throw BadRequestException("Song not found")
         val creater = memberMapper.findById(song.createrId)
         val beat = beatMapper.findById(song.beatId)
+        val songSummary = interactionService.songSummary(songId, memberId)
 
         val structures = structureMapper.findBySongId(songId).map { structure ->
             val chords = chordMapper.findByStructureId(structure.id)
@@ -38,12 +40,16 @@ class SongDetailService(
                 val filteredPlays = plays.filter { it.instrumentId == inst.id }.map { play ->
                     val player = memberMapper.findById(play.playerId)
                     val file = songPlayFileMapper.findFileById(play.songPlayFileId)
+                    val playSummary = interactionService.songPlaySummary(play.id, memberId)
                     SongPlayView(
                         id = play.id,
                         title = play.playTitle,
                         note = play.playNote,
                         playerName = player!!.memberName,
-                        audioUrl = s3UploaderService.getPublicUrl(file.s3Key)
+                        audioUrl = s3UploaderService.getPublicUrl(file.s3Key),
+                        liked = playSummary.liked,
+                        likeCount = playSummary.likeCount,
+                        commentCount = playSummary.commentCount
                     )
                 }
                 if (filteredPlays.isNotEmpty()) inst to filteredPlays else null
@@ -57,7 +63,10 @@ class SongDetailService(
                 bpm = song.bpm,
                 beat = beat.name,
                 // 必ずいる
-                creater = creater!!.memberName
+                creater = creater!!.memberName,
+                liked = songSummary.liked,
+                likeCount = songSummary.likeCount,
+                commentCount = songSummary.commentCount
             ),
             structures = structures,
             instrumentMap = instrumentMap

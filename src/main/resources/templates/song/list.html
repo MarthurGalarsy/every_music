@@ -34,7 +34,7 @@
 <table class="table table-bordered">
     <thead class="table-light">
     <tr>
-        <th>曲名</th><th>作曲者</th><th>説明</th><th>BPM</th><th>拍子</th><th></th>
+        <th>曲名</th><th>作曲者</th><th>説明</th><th>BPM</th><th>拍子</th><th>いいね</th><th>コメント</th><th></th>
     </tr>
     </thead>
     <tbody id="song-body">
@@ -60,6 +60,8 @@
                         <td>${song.songNote}</td>
                         <td>${song.bpm}</td>
                         <td>${song.beatName}</td>
+                        <td>♥ ${song.likeCount}</td>
+                        <td>${song.commentCount}</td>
                         <td><button class="btn btn-sm btn-outline-secondary" onclick="location.href='/song/detail/${song.id}'">詳細</button></td>
                     </tr>
                 `);

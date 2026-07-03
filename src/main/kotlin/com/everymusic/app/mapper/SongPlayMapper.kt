@@ -24,6 +24,20 @@ interface SongPlayMapper {
     """)
     fun findBySongId(@Param("songId") songId: Long): List<SongPlay>
 
+    @Select("""
+        SELECT
+            id,
+            song_id,
+            play_title,
+            play_note,
+            instrument_id,
+            song_play_file_id,
+            player_id
+        FROM song_play
+        WHERE id = #{id}
+    """)
+    fun findById(@Param("id") id: Long): SongPlay?
+
     @Insert("""
         INSERT INTO song_play (
             song_id,

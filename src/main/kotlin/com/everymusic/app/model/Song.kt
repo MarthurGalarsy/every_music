@@ -15,7 +15,9 @@ data class SongResponse(
     val songNote: String,
     val bpm: Int,
     val createrName: String,
-    val beatName: String
+    val beatName: String,
+    val likeCount: Int,
+    val commentCount: Int
 )
 
 data class SongInsert(
@@ -39,5 +41,8 @@ data class SongMeta(
     val note: String,
     val bpm: Int,
     val beat: String,
-    val creater: String
+    val creater: String,
+    val liked: Boolean,
+    val likeCount: Int,
+    val commentCount: Int
 )

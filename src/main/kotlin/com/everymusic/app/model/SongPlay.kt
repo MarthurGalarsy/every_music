@@ -15,7 +15,10 @@ data class SongPlayView(
     val title: String,
     val note: String,
     val playerName: String,
-    val audioUrl: String
+    val audioUrl: String,
+    val liked: Boolean,
+    val likeCount: Int,
+    val commentCount: Int
 )
 
 data class SongPlayInsert(

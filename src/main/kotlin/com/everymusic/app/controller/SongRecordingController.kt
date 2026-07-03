@@ -1,5 +1,6 @@
 package com.everymusic.app.controller
 
+import com.everymusic.app.model.Member
 import com.everymusic.app.service.InstrumentsService
 import com.everymusic.app.service.SongDetailService
 import jakarta.servlet.http.HttpSession
@@ -21,7 +22,8 @@ class SongRecordingController(
         model: Model,
         session: HttpSession
     ): String {
-        val detail = songDetailService.loadSongDetail(songId)
+        val member = session.getAttribute("loginMember") as Member
+        val detail = songDetailService.loadSongDetail(songId, member.id)
         model.addAttribute("song", detail.song)
         model.addAttribute("structures", detail.structures)
         model.addAttribute("instruments", instrumentService.findAll())

@@ -19,7 +19,9 @@ interface SongMapper {
             s.song_note,
             s.bpm,
             m.member_name AS creater_name,
-            b.name AS beat_name
+            b.name AS beat_name,
+            (SELECT COUNT(*) FROM song_like sl WHERE sl.song_id = s.id) AS like_count,
+            (SELECT COUNT(*) FROM song_comment sc WHERE sc.song_id = s.id) AS comment_count
         FROM songs s
         JOIN member m
         ON s.creater_id = m.id
