@@ -5,8 +5,21 @@
     <title>曲一覧</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/app-header.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/js/auth.js"></script>
     <style>
+        body {
+            background-color: #f4f6f8;
+        }
+        .page-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .page-actions .btn {
+            white-space: nowrap;
+        }
         .song-tags {
             display: flex;
             flex-wrap: wrap;
@@ -26,11 +39,57 @@
             background-color: #e7f1ff;
             color: #0a58ca;
         }
+        .song-card-list {
+            display: none;
+        }
+        @media (max-width: 767px) {
+            body.container {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+            .page-header {
+                align-items: stretch !important;
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            .page-actions {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                width: 100%;
+            }
+            .page-actions .btn {
+                width: 100%;
+            }
+            .song-table {
+                display: none;
+            }
+            .song-card-list {
+                display: grid;
+                gap: 0.75rem;
+            }
+            .song-card {
+                border: 1px solid #dee2e6;
+                border-radius: 8px;
+                background-color: #ffffff;
+                padding: 1rem;
+            }
+            .song-card-meta {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.45rem 0.75rem;
+                color: #6c757d;
+                font-size: 0.9rem;
+            }
+        }
     </style>
 </head>
 <body class="container mt-4">
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
+<div class="page-header d-flex justify-content-between align-items-center mb-3">
+    <div class="page-title-block">
+        <div class="app-brand">みんなで音楽！Every Music</div>
+        <h1 class="h2 mb-0">曲一覧</h1>
+    </div>
+    <div class="page-actions">
         <button onclick="location.href='/member/mypage'" class="btn btn-outline-primary">マイページ</button>
         <button onclick="location.href='/timeline'" class="btn btn-outline-primary">タイムライン</button>
         <button onclick="location.href='/ranking'" class="btn btn-outline-primary">ランキング</button>
@@ -61,7 +120,7 @@
     </form>
 </div>
 
-<table class="table table-bordered">
+<table class="table table-bordered song-table">
     <thead class="table-light">
     <tr>
         <th>曲名</th><th>作曲者</th><th>説明</th><th>タグ</th><th>BPM</th><th>拍子</th><th>いいね</th><th>コメント</th><th></th>
@@ -70,6 +129,7 @@
     <tbody id="song-body">
     </tbody>
 </table>
+<div id="song-card-list" class="song-card-list"></div>
 
 <script>
     $(function() {
@@ -103,7 +163,9 @@
             params.size = pageSize;
             $.get("/api/song/list", params, function(data) {
                 const body = $("#song-body");
+                const cardList = $("#song-card-list");
                 body.empty();
+                cardList.empty();
                 data.songs.forEach(song => {
                     body.append(`
                     <tr>
@@ -117,6 +179,25 @@
                         <td>${song.commentCount}</td>
                         <td><button class="btn btn-sm btn-outline-secondary" onclick="location.href='/song/detail/${song.id}'">詳細</button></td>
                     </tr>
+                `);
+                    cardList.append(`
+                    <article class="song-card">
+                        <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                            <div>
+                                <h2 class="h5 mb-1">${song.songTitle}</h2>
+                                <div class="text-muted small">${song.createrName}</div>
+                            </div>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="location.href='/song/detail/${song.id}'">詳細</button>
+                        </div>
+                        <p class="mb-2">${song.songNote}</p>
+                        <div class="mb-2">${renderTags(song.tags)}</div>
+                        <div class="song-card-meta">
+                            <span>BPM ${song.bpm}</span>
+                            <span>${song.beatName}</span>
+                            <span>♥ ${song.likeCount}</span>
+                            <span>コメント ${song.commentCount}</span>
+                        </div>
+                    </article>
                 `);
                 });
                 renderPagination(data.totalCount);
@@ -144,10 +225,6 @@
             e.preventDefault();
             currentPage = 1;
             loadSongs(currentSearchParams());
-        });
-
-        $("#logout").click(function() {
-            $.post("/api/member/logout", () => location.href = "/");
         });
 
         function loadUnreadNotificationCount() {

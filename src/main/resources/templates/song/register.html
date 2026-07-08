@@ -5,9 +5,36 @@
     <title>曲投稿</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/app-header.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/js/auth.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <style>
+        body {
+            background-color: #f4f6f8;
+        }
+        .song-form-panel {
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .page-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .page-actions .btn {
+            white-space: nowrap;
+        }
         .structure-block {
             border: 2px solid #dee2e6;
             padding: 15px;
@@ -30,6 +57,25 @@
             flex-wrap: wrap;
         }
         @media (max-width: 576px) {
+            body.container {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+            .page-header {
+                align-items: stretch;
+                flex-direction: column;
+            }
+            .page-actions {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                width: 100%;
+            }
+            .page-actions .btn {
+                width: 100%;
+            }
+            .song-form-panel {
+                padding: 18px;
+            }
             .chord-row {
                 width: 100%;
             }
@@ -37,44 +83,55 @@
     </style>
 </head>
 <body class="container mt-4">
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
+<div class="page-header">
+    <div class="page-title-block">
+        <div class="app-brand">みんなで音楽！Every Music</div>
+        <h1 class="h2 mb-0">曲投稿</h1>
+    </div>
+    <div class="page-actions">
         <button onclick="location.href='/member/mypage'" class="btn btn-outline-primary">マイページ</button>
+        <button onclick="location.href='/song/list'" class="btn btn-outline-primary">曲一覧</button>
+        <button onclick="location.href='/timeline'" class="btn btn-outline-primary">タイムライン</button>
+        <button onclick="location.href='/ranking'" class="btn btn-outline-primary">ランキング</button>
         <button onclick="location.href='/introduction'" class="btn btn-outline-primary">使い方一覧</button>
+        <button onclick="location.href='/notifications'" class="btn btn-outline-primary">
+            通知 <span class="badge text-bg-danger notification-unread-count d-none">0</span>
+        </button>
         <button id="logout" class="btn btn-outline-danger">ログアウト</button>
     </div>
 </div>
-<h2>曲投稿</h2>
-<div class="mb-3">
-    <label class="form-label">曲名</label>
-    <input type="text" class="form-control" id="title" required>
+<div class="song-form-panel">
+    <div class="mb-3">
+        <label class="form-label">曲名</label>
+        <input type="text" class="form-control" id="title" required>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">説明</label>
+        <input type="text" class="form-control" id="note" required>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">BPM</label>
+        <input type="number" class="form-control" id="bpm" min="1" required>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">拍子</label>
+        <select class="form-select" id="beatId"></select>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">タグ</label>
+        <input type="text" class="form-control" id="tags" placeholder="ロック, 初心者歓迎, ボーカル募集">
+        <div class="form-text" th:text="|カンマ区切りで${maxTagCount}個まで、1つ${maxTagLength}文字以内で入力できます。|">カンマ区切りで5個まで、1つ20文字以内で入力できます。</div>
+    </div>
+    <p>曲の構成は上から下の順番で流れるものとします</p>
+    <p>コード進行は左から右に流れるものとします</p>
+    <p>曲の構成はドラッグ＆ドロップで上下を入れ替えることができます</p>
+    <p>コード進行はドラッグ＆ドロップで左右を入れ替えることができます</p>
+    <button class="btn btn-outline-primary mb-3" id="add-structure">曲構成追加</button>
+    <div id="structure-list" class="sortable-vertical"></div>
+    <button class="btn btn-success" id="submit">⬆️ 投稿</button>
+    <a href="/song/list" class="btn btn-secondary">戻る</a>
+    <div id="error-message" class="alert alert-danger mt-3 d-none"></div>
 </div>
-<div class="mb-3">
-    <label class="form-label">説明</label>
-    <input type="text" class="form-control" id="note" required>
-</div>
-<div class="mb-3">
-    <label class="form-label">BPM</label>
-    <input type="number" class="form-control" id="bpm" min="1" required>
-</div>
-<div class="mb-3">
-    <label class="form-label">拍子</label>
-    <select class="form-select" id="beatId"></select>
-</div>
-<div class="mb-3">
-    <label class="form-label">タグ</label>
-    <input type="text" class="form-control" id="tags" placeholder="ロック, 初心者歓迎, ボーカル募集">
-    <div class="form-text" th:text="|カンマ区切りで${maxTagCount}個まで、1つ${maxTagLength}文字以内で入力できます。|">カンマ区切りで5個まで、1つ20文字以内で入力できます。</div>
-</div>
-<p>曲の構成は上から下の順番で流れるものとします</p>
-<p>コード進行は左から右に流れるものとします</p>
-<p>曲の構成はドラッグ＆ドロップで上下を入れ替えることができます</p>
-<p>コード進行はドラッグ＆ドロップで左右を入れ替えることができます</p>
-<button class="btn btn-outline-primary mb-3" id="add-structure">曲構成追加</button>
-<div id="structure-list" class="sortable-vertical"></div>
-<button class="btn btn-success" id="submit">⬆️ 投稿</button>
-<a href="/song/list" class="btn btn-secondary">戻る</a>
-<div id="error-message" class="alert alert-danger mt-3 d-none"></div>
 
 <script th:inline="javascript">
     const beats = /*[[${beats}]]*/ [];
@@ -132,6 +189,7 @@
 
     $(function () {
         beats.forEach(b => $("#beatId").append(`<option value="${b.id}">${b.name}</option>`));
+        loadUnreadNotificationCount();
 
         $("#add-structure").click(() => {
             const block = createStructureBlock();
@@ -242,6 +300,14 @@
                 }
             });
         });
+
+        function loadUnreadNotificationCount() {
+            $.get('/api/notifications/unread-count', function(data) {
+                const badge = $('.notification-unread-count');
+                badge.text(data.count);
+                badge.toggleClass('d-none', data.count === 0);
+            });
+        }
     });
 </script>
 </body>

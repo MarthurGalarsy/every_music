@@ -1,0 +1,26 @@
+.app-brand {
+    color: #f39c12;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 0.2rem;
+}
+
+.page-title-block {
+    min-width: 12rem;
+}
+
+.page-title-block h1,
+.page-title-block h2 {
+    margin-bottom: 0;
+}
+
+@media (max-width: 576px) {
+    .app-brand {
+        font-size: 0.9rem;
+    }
+
+    .page-title-block {
+        min-width: 0;
+    }
+}
