@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /song/list
+Disallow: /ranking
+Disallow: /member/mypage
+Disallow: /notifications
+Disallow: /timeline
+Disallow: /song/register
+Disallow: /song/register/copy/
+Disallow: /song/play/upload/
+Disallow: /song/recording/
+
+Sitemap: https://every-music.com/sitemap.xml

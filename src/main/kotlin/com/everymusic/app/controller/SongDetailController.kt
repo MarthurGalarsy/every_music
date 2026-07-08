@@ -1,5 +1,8 @@
 package com.everymusic.app.controller
 
+import com.everymusic.app.config.SeoProperties
+import com.everymusic.app.model.SongMeta
+import com.everymusic.app.model.SongTagView
 import com.everymusic.app.model.ValidationLimits
 import com.everymusic.app.service.SongDetailService
 import jakarta.servlet.http.HttpSession
@@ -10,7 +13,8 @@ import org.springframework.web.bind.annotation.PathVariable
 
 @Controller
 class SongDetailController(
-    private val songDetailService: SongDetailService
+    private val songDetailService: SongDetailService,
+    private val seoProperties: SeoProperties
 ) {
 
     @GetMapping("/song/detail/{id}")
@@ -33,6 +37,21 @@ class SongDetailController(
         model.addAttribute("maxTagLength", ValidationLimits.MAX_TAG_LENGTH)
         model.addAttribute("maxCommentLength", ValidationLimits.MAX_COMMENT_LENGTH)
         model.addAttribute("maxRecruitmentNoteLength", ValidationLimits.MAX_RECRUITMENT_NOTE_LENGTH)
+        model.addAttribute("seoTitle", "${detail.song.title} - ${detail.song.creater} | Every Music")
+        model.addAttribute("seoDescription", buildSeoDescription(detail.song, detail.tags))
+        model.addAttribute("seoUrl", seoProperties.absoluteUrl("/song/detail/${detail.song.id}"))
         return "song/detail"
+    }
+
+    private fun buildSeoDescription(song: SongMeta, tags: List<SongTagView>): String {
+        val note = song.note.ifBlank { "${song.creater}さんがEvery Musicに投稿した曲です。" }
+        val tagText = tags.joinToString(" ") { "#${it.tagName}" }
+        val description = listOf(
+            note,
+            "BPM ${song.bpm}",
+            song.beat,
+            tagText
+        ).filter { it.isNotBlank() }.joinToString(" ")
+        return description.take(155)
     }
 }

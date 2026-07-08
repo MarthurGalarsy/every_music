@@ -2,7 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>通知</title>
+    <th:block th:replace="~{fragments/seo :: meta('通知 | Every Music', 'Every Musicのフォローや投稿に関する通知を確認できます。', 'website', ${publicBaseUrl + '/notifications'})}"></th:block>
+    <meta name="robots" content="noindex,nofollow">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="/css/app-header.css" rel="stylesheet">

@@ -22,10 +22,18 @@ class AuthFilter : GenericFilterBean() {
         val response = res as HttpServletResponse
         val path = request.requestURI
 
-        val isStatic = path.startsWith("/css") || path.startsWith("/js") || path.startsWith("/images")
+        val isStatic = path.startsWith("/css") ||
+            path.startsWith("/js") ||
+            path.startsWith("/images") ||
+            path == "/robots.txt" ||
+            path == "/sitemap.xml" ||
+            path == "/favicon.ico"
         val isPublicMemberPage = path == "/member/register"
-        val isPublicPage = path == "/" || path.startsWith("/login") || path.startsWith("/introduction")
-        val isPublicApi = path.startsWith("/api/member/login") || path.startsWith("/api/member/register")
+        val isPublicPage = path == "/" ||
+            path.startsWith("/login") ||
+            path.startsWith("/introduction")
+        val isPublicApi = path.startsWith("/api/member/login") ||
+            path.startsWith("/api/member/register")
 
         if (isStatic || isPublicMemberPage || isPublicPage || isPublicApi) {
             chain.doFilter(req, res)

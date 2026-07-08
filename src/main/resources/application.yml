@@ -9,6 +9,9 @@ spring:
 mybatis:
   mapper-locations: classpath*:mapper/**/*.xml  # 使っていなければ不要
   type-aliases-package: com.everymusic.app.model
+app:
+  public-base-url: ${PUBLIC_BASE_URL:https://every-music.com}
+  og-image-path: /images/ogp-default.svg
 cloud:
   aws:
     region: ${AWS_REGION}

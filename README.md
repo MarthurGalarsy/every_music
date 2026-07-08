@@ -3,6 +3,31 @@ every one, every time, music
 
 ---
 
+# SEO
+## 機能概要
+* 本番ドメインは `https://every-music.com/`
+* 各主要画面でtitle、meta description、canonical、OGP、Twitter Cardを出力する
+* OGP画像は共通画像 `/images/ogp-default.svg` を使用する
+* `/sitemap.xml` で公開ページを検索エンジンに通知する
+* `/robots.txt` でクロール可能なページとログイン後の個人ページを整理する
+
+## 設定
+* `PUBLIC_BASE_URL`
+    * canonical、OGP URL、sitemap.xmlのURL生成に使用する
+    * 未指定時は `https://every-music.com`
+* `app.og-image-path`
+    * OGP画像のパス
+    * 初期値は `/images/ogp-default.svg`
+
+## 公開URL
+* `/`
+* `/member/register`
+* `/introduction`
+* `/sitemap.xml`
+* `/robots.txt`
+
+---
+
 # 今後の展望
 1. どうやってみんなに使ってもらおうか
 

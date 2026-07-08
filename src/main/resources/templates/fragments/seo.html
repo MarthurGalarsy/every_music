@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="meta(pageTitle, description, ogType, canonicalUrl)">
+    <title th:text="${pageTitle}">Every Music</title>
+    <meta name="description" th:content="${description}">
+    <link rel="canonical" th:href="${canonicalUrl}">
+    <meta property="og:site_name" th:content="${siteName}">
+    <meta property="og:title" th:content="${pageTitle}">
+    <meta property="og:description" th:content="${description}">
+    <meta property="og:type" th:content="${ogType}">
+    <meta property="og:url" th:content="${canonicalUrl}">
+    <meta property="og:image" th:content="${defaultOgImageUrl}">
+    <meta name="twitter:card" content="summary">
+</th:block>
+</body>
+</html>
