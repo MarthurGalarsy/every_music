@@ -78,19 +78,71 @@
             white-space: pre-wrap;
             word-break: break-word;
         }
+        .recruitment-list {
+            display: grid;
+            gap: 0.75rem;
+        }
+        .recruitment-item {
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 0.75rem;
+            background-color: #ffffff;
+        }
+        .recruitment-note {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .recruitment-row {
+            border-bottom: 1px solid #e9ecef;
+            padding: 0.75rem 0;
+        }
+        .recruitment-row:last-child {
+            border-bottom: none;
+        }
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .song-tag {
+            border: 1px solid #0d6efd;
+            border-radius: 999px;
+            color: #0d6efd;
+            background-color: #ffffff;
+            padding: 0.25rem 0.65rem;
+            font-size: 0.9rem;
+            text-decoration: none;
+        }
+        .song-tag:hover {
+            background-color: #e7f1ff;
+            color: #0a58ca;
+        }
     </style>
 </head>
 <body class="container mt-4">
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <button onclick="location.href='/member/mypage'" class="btn btn-outline-primary">マイページ</button>
+        <button onclick="location.href='/timeline'" class="btn btn-outline-primary">タイムライン</button>
+        <button onclick="location.href='/ranking'" class="btn btn-outline-primary">ランキング</button>
         <button onclick="location.href='/introduction'" class="btn btn-outline-primary">使い方一覧</button>
+        <button onclick="location.href='/notifications'" class="btn btn-outline-primary">
+            通知 <span class="badge text-bg-danger notification-unread-count d-none">0</span>
+        </button>
         <button id="logout" class="btn btn-outline-danger">ログアウト</button>
     </div>
 </div>
 <h2 class="mb-3" th:text="${song.title}"></h2>
 <div class="mb-3">
-    <strong>作曲者:</strong> <span th:text="${song.creater}"></span><br />
+    <strong>作曲者:</strong>
+    <span th:text="${song.creater}"></span>
+    <button type="button"
+            class="btn btn-sm follow-button ms-2"
+            th:if="${song.canFollowCreator}"
+            th:classappend="${song.followingCreator} ? ' btn-primary' : ' btn-outline-primary'"
+            th:attr="data-member-id=${song.createrId},data-following=${song.followingCreator}">
+        <span th:text="${song.followingCreator} ? 'フォロー中' : 'フォロー'"></span>
+    </button><br />
     <strong>説明:</strong> <span th:text="${song.note}"></span><br />
     <strong>BPM:</strong> <span th:text="${song.bpm}"></span><br />
     <strong>拍子:</strong> <span th:text="${song.beat}"></span>
@@ -112,6 +164,34 @@
             <span class="comment-count" th:text="${song.commentCount}"></span>
         </button>
     </div>
+</div>
+
+<div class="section-block">
+    <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+        <h4 class="mb-0">タグ</h4>
+        <button type="button"
+                class="btn btn-sm btn-outline-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#tag-modal"
+                th:if="${canEditTags}">
+            タグ編集
+        </button>
+    </div>
+    <div id="tag-list" class="tag-list"></div>
+</div>
+
+<div class="section-block">
+    <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+        <h4 class="mb-0">演奏募集</h4>
+        <button type="button"
+                class="btn btn-sm btn-outline-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#recruitment-modal"
+                th:if="${canEditRecruitments}">
+            募集内容を編集
+        </button>
+    </div>
+    <div id="recruitment-list" class="recruitment-list"></div>
 </div>
 
 <h4 class="mt-4">曲構成</h4>
@@ -136,7 +216,16 @@
                     <span th:text="${play.title}"></span>
                 </label>
                 <small class="text-muted d-block" th:text="${play.note}"></small>
-                <small class="d-block fst-italic" th:text="'演奏者: ' + ${play.playerName}"></small>
+                <small class="d-block fst-italic">
+                    演奏者: <span th:text="${play.playerName}"></span>
+                    <button type="button"
+                            class="btn btn-sm follow-button ms-2"
+                            th:if="${play.canFollowPlayer}"
+                            th:classappend="${play.followingPlayer} ? ' btn-primary' : ' btn-outline-primary'"
+                            th:attr="data-member-id=${play.playerId},data-following=${play.followingPlayer}">
+                        <span th:text="${play.followingPlayer} ? 'フォロー中' : 'フォロー'"></span>
+                    </button>
+                </small>
                 <div class="interaction-actions">
                     <button type="button"
                             class="btn btn-sm btn-outline-secondary interaction-button like-button"
@@ -179,6 +268,44 @@
     </div>
 </form>
 
+<div class="modal fade" id="tag-modal" tabindex="-1" aria-hidden="true" th:if="${canEditTags}">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">タグ編集</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+            </div>
+            <div class="modal-body">
+                <label for="tag-input" class="form-label">タグ</label>
+                <input type="text" id="tag-input" class="form-control" placeholder="ロック, 初心者歓迎, ボーカル募集">
+                <div class="form-text" th:text="|カンマ区切りで${maxTagCount}個まで、1つ${maxTagLength}文字以内で入力できます。|">カンマ区切りで5個まで、1つ20文字以内で入力できます。</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">閉じる</button>
+                <button type="button" class="btn btn-primary" id="save-tag-button">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="recruitment-modal" tabindex="-1" aria-hidden="true" th:if="${canEditRecruitments}">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">募集内容を編集</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+            </div>
+            <div class="modal-body">
+                <div id="recruitment-editor"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">閉じる</button>
+                <button type="button" class="btn btn-primary" id="save-recruitment-button">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="comment-modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
@@ -189,8 +316,8 @@
             <div class="modal-body">
                 <div id="comment-list" class="comment-list mb-3"></div>
                 <label for="comment-input" class="form-label">あなたのコメント</label>
-                <textarea id="comment-input" class="form-control" rows="4" maxlength="1000"></textarea>
-                <div class="form-text text-end"><span id="comment-length">0</span>/1000</div>
+                <textarea id="comment-input" class="form-control" rows="4" th:attr="maxlength=${maxCommentLength}"></textarea>
+                <div class="form-text text-end"><span id="comment-length">0</span>/<span th:text="${maxCommentLength}">1000</span></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">閉じる</button>
@@ -200,6 +327,17 @@
     </div>
 </div>
 
+<script th:inline="javascript">
+    const detailSongId = /*[[${song.id}]]*/ 0;
+    const initialRecruitments = /*[[${recruitments}]]*/ [];
+    const allRecruitmentInstruments = /*[[${allInstruments}]]*/ [];
+    const canEditRecruitments = /*[[${canEditRecruitments}]]*/ false;
+    const initialTags = /*[[${tags}]]*/ [];
+    const canEditTags = /*[[${canEditTags}]]*/ false;
+    const maxTagCount = /*[[${maxTagCount}]]*/ 5;
+    const maxTagLength = /*[[${maxTagLength}]]*/ 20;
+    const maxRecruitmentNoteLength = /*[[${maxRecruitmentNoteLength}]]*/ 255;
+</script>
 <script>
     let audioContext;
     let sources = [];
@@ -207,6 +345,104 @@
 
     function targetBasePath(type, id) {
         return type === 'song' ? `/api/song/${id}` : `/api/song/play/${id}`;
+    }
+
+    function renderRecruitmentList(recruitments) {
+        const list = $('#recruitment-list');
+        list.empty();
+
+        if (!recruitments || recruitments.length === 0) {
+            list.append($('<div>').addClass('text-muted').text('現在募集中のパートはありません。'));
+            return;
+        }
+
+        recruitments.forEach(recruitment => {
+            const item = $('<div>').addClass('recruitment-item');
+            item.append($('<strong>').text(recruitment.instrumentName));
+            if (recruitment.note) {
+                item.append($('<div>').addClass('recruitment-note text-muted mt-1').text(recruitment.note));
+            }
+            list.append(item);
+        });
+    }
+
+    function renderTagList(tags) {
+        const list = $('#tag-list');
+        list.empty();
+
+        if (!tags || tags.length === 0) {
+            list.append($('<div>').addClass('text-muted').text('タグはまだありません。'));
+            return;
+        }
+
+        tags.forEach(tag => {
+            const link = $('<a>')
+                .addClass('song-tag')
+                .attr('href', `/song/list?tag=${encodeURIComponent(tag.tagName)}`)
+                .text(`#${tag.tagName}`);
+            list.append(link);
+        });
+    }
+
+    function parseTags(value) {
+        return value
+            .split(',')
+            .map(tag => tag.trim())
+            .filter(tag => tag.length > 0)
+            .filter((tag, index, tags) => tags.indexOf(tag) === index);
+    }
+
+    function renderRecruitmentEditor(recruitments) {
+        const editor = $('#recruitment-editor');
+        if (editor.length === 0) return;
+
+        editor.empty();
+        const recruitmentByInstrument = new Map((recruitments || []).map(item => [Number(item.instrumentId), item]));
+
+        if (!allRecruitmentInstruments || allRecruitmentInstruments.length === 0) {
+            editor.append($('<div>').addClass('text-muted').text('楽器が登録されていません。'));
+            return;
+        }
+
+        allRecruitmentInstruments.forEach(instrument => {
+            const instrumentId = Number(instrument.id);
+            const current = recruitmentByInstrument.get(instrumentId);
+            const row = $('<div>').addClass('recruitment-row');
+            const checkWrapper = $('<div>').addClass('form-check mb-2');
+            const checkbox = $('<input>')
+                .addClass('form-check-input recruitment-checkbox')
+                .attr('type', 'checkbox')
+                .attr('id', `recruitment-${instrumentId}`)
+                .attr('data-instrument-id', instrumentId)
+                .prop('checked', !!current);
+            const label = $('<label>')
+                .addClass('form-check-label fw-semibold')
+                .attr('for', `recruitment-${instrumentId}`)
+                .text(instrument.name);
+            const note = $('<input>')
+                .addClass('form-control form-control-sm recruitment-note-input')
+                .attr('type', 'text')
+                .attr('maxlength', maxRecruitmentNoteLength)
+                .attr('placeholder', '募集コメント')
+                .val(current ? current.note : '')
+                .prop('disabled', !current);
+
+            checkWrapper.append(checkbox, label);
+            row.append(checkWrapper, note);
+            editor.append(row);
+        });
+    }
+
+    function collectRecruitmentEditorValues() {
+        return $('#recruitment-editor .recruitment-row').map(function () {
+            const row = $(this);
+            const checkbox = row.find('.recruitment-checkbox');
+            if (!checkbox.is(':checked')) return null;
+            return {
+                instrumentId: Number(checkbox.data('instrument-id')),
+                note: row.find('.recruitment-note-input').val().trim()
+            };
+        }).get();
     }
 
     function applySummary(type, id, summary) {
@@ -217,6 +453,105 @@
         likeButton.find('.like-count').text(summary.likeCount);
         $(`.comment-button${selector}`).find('.comment-count').text(summary.commentCount);
     }
+
+    function applyFollowSummary(memberId, summary) {
+        $(`.follow-button[data-member-id="${memberId}"]`).each(function () {
+            const button = $(this);
+            button.attr('data-following', summary.following);
+            button.toggleClass('btn-primary', summary.following);
+            button.toggleClass('btn-outline-primary', !summary.following);
+            button.find('span').text(summary.following ? 'フォロー中' : 'フォロー');
+        });
+    }
+
+    renderRecruitmentList(initialRecruitments);
+    renderRecruitmentEditor(initialRecruitments);
+    renderTagList(initialTags);
+    $('#tag-input').val((initialTags || []).map(tag => tag.tagName).join(', '));
+    loadUnreadNotificationCount();
+
+    function loadUnreadNotificationCount() {
+        $.get('/api/notifications/unread-count', function(data) {
+            const badge = $('.notification-unread-count');
+            badge.text(data.count);
+            badge.toggleClass('d-none', data.count === 0);
+        });
+    }
+
+    $('#recruitment-editor').on('change', '.recruitment-checkbox', function () {
+        const row = $(this).closest('.recruitment-row');
+        row.find('.recruitment-note-input').prop('disabled', !$(this).is(':checked'));
+    });
+
+    $('#save-recruitment-button').on('click', function () {
+        if (!canEditRecruitments) return;
+
+        const button = $(this);
+        button.prop('disabled', true);
+        $.ajax({
+            url: `/api/song/${detailSongId}/recruitments`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ recruitments: collectRecruitmentEditorValues() })
+        })
+            .done(recruitments => {
+                renderRecruitmentList(recruitments);
+                renderRecruitmentEditor(recruitments);
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('recruitment-modal')).hide();
+            })
+            .fail(xhr => {
+                const message = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : '募集内容の保存に失敗しました。';
+                alert(message);
+            })
+            .always(() => button.prop('disabled', false));
+    });
+
+    $('#save-tag-button').on('click', function () {
+        if (!canEditTags) return;
+
+        const tags = parseTags($('#tag-input').val());
+        if (tags.length > maxTagCount) {
+            alert(`タグは${maxTagCount}個以内で入力してください。`);
+            return;
+        }
+        if (tags.some(tag => tag.length > maxTagLength)) {
+            alert(`タグは${maxTagLength}文字以内で入力してください。`);
+            return;
+        }
+
+        const button = $(this);
+        button.prop('disabled', true);
+        $.ajax({
+            url: `/api/song/${detailSongId}/tags`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ tags })
+        })
+            .done(savedTags => {
+                renderTagList(savedTags);
+                $('#tag-input').val(savedTags.map(tag => tag.tagName).join(', '));
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('tag-modal')).hide();
+            })
+            .fail(xhr => {
+                const message = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'タグの保存に失敗しました。';
+                alert(message);
+            })
+            .always(() => button.prop('disabled', false));
+    });
+
+    $('.follow-button').on('click', function () {
+        const button = $(this);
+        const memberId = button.data('member-id');
+        button.prop('disabled', true);
+
+        $.post(`/api/members/${memberId}/follow`)
+            .done(summary => applyFollowSummary(memberId, summary))
+            .fail(xhr => {
+                const message = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'フォローの更新に失敗しました。';
+                alert(message);
+            })
+            .always(() => button.prop('disabled', false));
+    });
 
     function renderComments(comments) {
         const list = $('#comment-list');

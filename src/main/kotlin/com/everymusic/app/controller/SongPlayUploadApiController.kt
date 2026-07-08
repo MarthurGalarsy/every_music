@@ -1,6 +1,5 @@
 package com.everymusic.app.controller
 
-import com.everymusic.app.model.Member
 import com.everymusic.app.model.SongPlayUploadForm
 import com.everymusic.app.service.S3UploaderService
 import com.everymusic.app.service.SongPlayService
@@ -22,8 +21,7 @@ class SongPlayUploadApiController(
         @RequestParam("file") file: MultipartFile,
         session: HttpSession
     ): ResponseEntity<Any> {
-        val loginMember =
-            session.getAttribute("loginMember") as? Member ?: return ResponseEntity.status(401).body("未ログインです")
+        val loginMember = currentMember(session) ?: return unauthorizedResponse()
         val s3Key = s3UploaderService.upload(file)
         songPlayService.register(
             form,

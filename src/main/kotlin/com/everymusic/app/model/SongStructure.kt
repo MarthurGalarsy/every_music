@@ -9,6 +9,7 @@ data class SongStructureInsert(
 
 data class SongStructure(
     val id: Long,
+    val sectionId: Int,
     val sectionName: String
 )
 

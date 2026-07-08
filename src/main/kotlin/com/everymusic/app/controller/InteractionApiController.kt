@@ -1,11 +1,8 @@
 package com.everymusic.app.controller
 
 import com.everymusic.app.model.CommentRequest
-import com.everymusic.app.model.Member
 import com.everymusic.app.service.InteractionService
 import jakarta.servlet.http.HttpSession
-import org.apache.coyote.BadRequestException
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -25,7 +22,7 @@ class InteractionApiController(
         @PathVariable songId: Long,
         session: HttpSession
     ): ResponseEntity<Any> {
-        val member = currentMember(session) ?: return unauthorized()
+        val member = currentMember(session) ?: return unauthorizedResponse()
         return handleBadRequest {
             interactionService.toggleSongLike(songId, member.id)
         }
@@ -36,7 +33,7 @@ class InteractionApiController(
         @PathVariable songId: Long,
         session: HttpSession
     ): ResponseEntity<Any> {
-        val member = currentMember(session) ?: return unauthorized()
+        val member = currentMember(session) ?: return unauthorizedResponse()
         return handleBadRequest {
             interactionService.findSongComments(songId, member.id)
         }
@@ -48,7 +45,7 @@ class InteractionApiController(
         @RequestBody request: CommentRequest,
         session: HttpSession
     ): ResponseEntity<Any> {
-        val member = currentMember(session) ?: return unauthorized()
+        val member = currentMember(session) ?: return unauthorizedResponse()
         return handleBadRequest {
             interactionService.saveSongComment(songId, member.id, request.comment)
         }
@@ -59,7 +56,7 @@ class InteractionApiController(
         @PathVariable songPlayId: Long,
         session: HttpSession
     ): ResponseEntity<Any> {
-        val member = currentMember(session) ?: return unauthorized()
+        val member = currentMember(session) ?: return unauthorizedResponse()
         return handleBadRequest {
             interactionService.toggleSongPlayLike(songPlayId, member.id)
         }
@@ -70,7 +67,7 @@ class InteractionApiController(
         @PathVariable songPlayId: Long,
         session: HttpSession
     ): ResponseEntity<Any> {
-        val member = currentMember(session) ?: return unauthorized()
+        val member = currentMember(session) ?: return unauthorizedResponse()
         return handleBadRequest {
             interactionService.findSongPlayComments(songPlayId, member.id)
         }
@@ -82,25 +79,9 @@ class InteractionApiController(
         @RequestBody request: CommentRequest,
         session: HttpSession
     ): ResponseEntity<Any> {
-        val member = currentMember(session) ?: return unauthorized()
+        val member = currentMember(session) ?: return unauthorizedResponse()
         return handleBadRequest {
             interactionService.saveSongPlayComment(songPlayId, member.id, request.comment)
-        }
-    }
-
-    private fun currentMember(session: HttpSession): Member? {
-        return session.getAttribute("loginMember") as? Member
-    }
-
-    private fun unauthorized(): ResponseEntity<Any> {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(mapOf("message" to "ログインが必要です"))
-    }
-
-    private fun handleBadRequest(action: () -> Any): ResponseEntity<Any> {
-        return try {
-            ResponseEntity.ok(action())
-        } catch (e: BadRequestException) {
-            ResponseEntity.badRequest().body(mapOf("message" to (e.message ?: "リクエストが不正です")))
         }
     }
 }

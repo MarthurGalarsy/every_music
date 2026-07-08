@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS `tags`
+(
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `tag_name` VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'タグ名',
+    `created_date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+    PRIMARY KEY (`id`),
+    UNIQUE (`tag_name`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT 'タグ'
+;
+
+CREATE TABLE IF NOT EXISTS `song_tag`
+(
+    `song_id` BIGINT UNSIGNED NOT NULL,
+    `tag_id` BIGINT UNSIGNED NOT NULL,
+    `created_date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    PRIMARY KEY (`song_id`, `tag_id`),
+    INDEX `idx_tag_id` (`tag_id`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT '曲タグ'
+;

@@ -23,11 +23,11 @@ class AuthFilter : GenericFilterBean() {
         val path = request.requestURI
 
         val isStatic = path.startsWith("/css") || path.startsWith("/js") || path.startsWith("/images")
-        val isMemberPage = path.startsWith("/member")
+        val isPublicMemberPage = path == "/member/register"
         val isPublicPage = path == "/" || path.startsWith("/login") || path.startsWith("/introduction")
         val isPublicApi = path.startsWith("/api/member/login") || path.startsWith("/api/member/register")
 
-        if (isStatic || isMemberPage || isPublicPage || isPublicApi) {
+        if (isStatic || isPublicMemberPage || isPublicPage || isPublicApi) {
             chain.doFilter(req, res)
             return
         }
@@ -37,7 +37,7 @@ class AuthFilter : GenericFilterBean() {
             return
         }
 
-        if (session.getAttribute("loginMember") == null) {
+        if (session.getAttribute(LOGIN_MEMBER_SESSION_KEY) == null) {
             response.sendRedirect("/")
             return
         }

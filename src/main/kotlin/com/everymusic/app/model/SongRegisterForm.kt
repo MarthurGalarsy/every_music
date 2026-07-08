@@ -7,7 +7,8 @@ data class SongRegisterRequest(
     @field:NotBlank val note: String,
     @field:Min(1) val bpm: Int,
     @field:NotNull val beatId: Int,
-    @field:Size(min = 1) val structures: List<SongStructureRequest>
+    @field:Size(min = 1) val structures: List<SongStructureRequest>,
+    val tags: List<String> = emptyList()
 )
 
 data class SongStructureRequest(
@@ -28,7 +29,8 @@ data class SongCopyForm(
     val note: String,
     val bpm: Int,
     val beatId: Int,
-    val structures: List<SongStructureForm>
+    val structures: List<SongStructureForm>,
+    val tags: List<String> = emptyList()
 )
 
 data class SongStructureForm(

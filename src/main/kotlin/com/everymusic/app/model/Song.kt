@@ -32,7 +32,12 @@ data class SongInsert(
 data class SongDetailView(
     val song: SongMeta,
     val structures: List<SongStructureView>,
-    val instrumentMap: Map<Instrument, List<SongPlayView>>
+    val instrumentMap: Map<Instrument, List<SongPlayView>>,
+    val allInstruments: List<Instrument>,
+    val recruitments: List<SongRecruitmentView>,
+    val canEditRecruitments: Boolean,
+    val tags: List<SongTagView>,
+    val canEditTags: Boolean
 )
 
 data class SongMeta(
@@ -41,8 +46,11 @@ data class SongMeta(
     val note: String,
     val bpm: Int,
     val beat: String,
+    val createrId: Long,
     val creater: String,
     val liked: Boolean,
     val likeCount: Int,
-    val commentCount: Int
+    val commentCount: Int,
+    val followingCreator: Boolean,
+    val canFollowCreator: Boolean
 )

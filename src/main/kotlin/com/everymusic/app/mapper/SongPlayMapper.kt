@@ -2,6 +2,7 @@ package com.everymusic.app.mapper
 
 import com.everymusic.app.model.SongPlay
 import com.everymusic.app.model.SongPlayInsert
+import com.everymusic.app.model.MypagePlayView
 import org.apache.ibatis.annotations.Insert
 import org.apache.ibatis.annotations.Mapper
 import org.apache.ibatis.annotations.Options
@@ -37,6 +38,26 @@ interface SongPlayMapper {
         WHERE id = #{id}
     """)
     fun findById(@Param("id") id: Long): SongPlay?
+
+    @Select("""
+        SELECT
+            sp.id,
+            sp.song_id AS songId,
+            s.song_title AS songTitle,
+            sp.play_title AS playTitle,
+            sp.play_note AS playNote,
+            i.name AS instrumentName,
+            (SELECT COUNT(*) FROM song_play_like spl WHERE spl.song_play_id = sp.id) AS likeCount,
+            (SELECT COUNT(*) FROM song_play_comment spc WHERE spc.song_play_id = sp.id) AS commentCount
+        FROM song_play sp
+        JOIN songs s
+        ON sp.song_id = s.id
+        JOIN instruments i
+        ON sp.instrument_id = i.id
+        WHERE sp.player_id = #{memberId}
+        ORDER BY sp.id DESC
+    """)
+    fun findPlaysByPlayerId(@Param("memberId") memberId: Long): List<MypagePlayView>
 
     @Insert("""
         INSERT INTO song_play (

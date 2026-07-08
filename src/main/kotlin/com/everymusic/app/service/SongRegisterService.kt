@@ -17,6 +17,7 @@ class SongRegisterService(
     private val songMapper: SongMapper,
     private val songStructureMapper: SongStructureMapper,
     private val chordProgressionMapper: ChordProgressionMapper,
+    private val tagService: TagService
 ) {
     fun getBeatList(): List<Beat> = beatMapper.findAll()
     fun getSectionList(): List<Section> = sectionsMapper.findAll()
@@ -31,9 +32,10 @@ class SongRegisterService(
             note = request.note,
             bpm = request.bpm,
             beatId = request.beatId,
-            createrId = (member as Member).id
+            createrId = member.id
         )
         songMapper.insertSong(song)
+        tagService.saveTagsForNewSong(song.id, request.tags)
 
         request.structures.forEachIndexed { sIndex, s ->
             val structure = SongStructureInsert(
@@ -62,7 +64,7 @@ class SongRegisterService(
         val structureForms = structures.map { structure ->
             val chords = chordProgressionMapper.findByStructureId(structure.id)
             SongStructureForm(
-                sectionId = structure.sectionName.toIntOrNull() ?: 0, // 必要に応じてID取得へ
+                sectionId = structure.sectionId,
                 chords = chords.map { ChordRequest(it.chord, it.measureNum) }
             )
         }
@@ -71,7 +73,8 @@ class SongRegisterService(
             note = song.songNote,
             bpm = song.bpm,
             beatId = song.beatId,
-            structures = structureForms
+            structures = structureForms,
+            tags = tagService.findBySongId(songId).map { it.tagName }
         )
     }
 }

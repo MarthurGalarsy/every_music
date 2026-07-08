@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>タイムライン</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            background-color: #f4f6f8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .page-shell {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 16px;
+        }
+        .timeline-panel {
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 24px;
+        }
+        .timeline-item {
+            border-bottom: 1px solid #e9ecef;
+            padding: 1rem 0;
+        }
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+        .empty-message {
+            color: #6c757d;
+            border: 1px dashed #ced4da;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="page-shell">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">タイムライン</h2>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-primary" th:href="@{/notifications}">
+                通知 <span class="badge text-bg-danger notification-unread-count d-none">0</span>
+            </a>
+            <a class="btn btn-outline-primary" th:href="@{/ranking}">ランキング</a>
+            <a class="btn btn-outline-dark" th:href="@{/song/list}">曲一覧へ</a>
+        </div>
+    </div>
+
+    <div class="timeline-panel">
+        <div id="timeline-list"></div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        function formatDate(value) {
+            return (value || '').toString().replace('T', ' ').slice(0, 16);
+        }
+
+        function renderTimeline(items) {
+            const list = $('#timeline-list');
+            list.empty();
+
+            if (items.length === 0) {
+                list.append($('<div>').addClass('empty-message').text('フォロー中のメンバーの新着はまだありません。'));
+                return;
+            }
+
+            items.forEach(item => {
+                const itemType = item.itemType === 'song' ? '新曲' : '新演奏';
+                const row = $('<div>').addClass('timeline-item');
+                row.append($('<div>').addClass('text-muted small').text(`${itemType} / ${item.memberName} / ${formatDate(item.createdDate)}`));
+                row.append($('<a>')
+                    .addClass('fw-semibold d-block mt-1')
+                    .attr('href', `/song/detail/${item.songId}`)
+                    .text(item.title));
+                row.append($('<div>').addClass('text-muted small mt-1').text(item.note));
+                list.append(row);
+            });
+        }
+
+        function loadTimeline() {
+            $.get('/api/timeline', renderTimeline)
+                .fail(() => {
+                    $('#timeline-list').empty().append(
+                        $('<div>').addClass('empty-message').text('タイムラインの取得に失敗しました。')
+                    );
+                });
+        }
+
+        function loadUnreadNotificationCount() {
+            $.get('/api/notifications/unread-count', function(data) {
+                const badge = $('.notification-unread-count');
+                badge.text(data.count);
+                badge.toggleClass('d-none', data.count === 0);
+            });
+        }
+
+        loadTimeline();
+        loadUnreadNotificationCount();
+    });
+</script>
+</body>
+</html>

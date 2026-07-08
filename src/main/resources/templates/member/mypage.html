@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <title>マイページ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
@@ -10,56 +11,213 @@
             background-color: #f4f6f8;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .mypage-container {
-            max-width: 500px;
-            margin: 80px auto;
-            padding: 30px;
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        .page-shell {
+            max-width: 1120px;
+            margin: 40px auto;
+            padding: 0 16px;
         }
-        h2 {
+        .profile-panel,
+        .list-panel {
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 24px;
+        }
+        .profile-panel {
+            height: fit-content;
+        }
+        h2,
+        h3 {
             font-weight: 600;
-            margin-bottom: 30px;
         }
         .form-control {
             border-radius: 8px;
         }
+        .stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .empty-message {
+            color: #6c757d;
+            border: 1px dashed #ced4da;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
-<div class="mypage-container">
-    <h2 class="text-center">マイページ</h2>
-    <form id="mypage-form">
-        <div class="mb-3">
-            <label class="form-label">メールアドレス</label>
-            <input type="email" class="form-control" name="mailAddress" readonly />
+<div class="page-shell">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">マイページ</h2>
         </div>
-        <div class="mb-3">
-            <label class="form-label">名前</label>
-            <input type="text" class="form-control" name="name" required />
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-primary" th:href="@{/notifications}">
+                通知 <span class="badge text-bg-danger notification-unread-count d-none">0</span>
+            </a>
+            <a class="btn btn-outline-primary" th:href="@{/timeline}">タイムライン</a>
+            <a class="btn btn-outline-primary" th:href="@{/ranking}">ランキング</a>
+            <a class="btn btn-outline-dark" th:href="@{/song/list}">曲一覧へ</a>
         </div>
-        <div class="mb-3">
-            <label class="form-label">パスワード</label>
-            <input type="password" class="form-control" name="password" required />
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="profile-panel">
+                <h3 class="h5 mb-3">プロフィール編集</h3>
+                <div class="d-flex gap-3 mb-3 text-muted">
+                    <span>フォロー中 <strong id="following-count">0</strong></span>
+                    <span>フォロワー <strong id="follower-count">0</strong></span>
+                </div>
+                <form id="mypage-form">
+                    <div class="mb-3">
+                        <label class="form-label">メールアドレス</label>
+                        <input type="email" class="form-control" name="mailAddress" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">名前</label>
+                        <input type="text" class="form-control" name="name" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">パスワード</label>
+                        <input type="password" class="form-control" name="password" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">パスワード確認</label>
+                        <input type="password" class="form-control" name="passwordConfirm" required />
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">変更</button>
+                    </div>
+                </form>
+                <div id="error-message" class="alert alert-danger mt-3 d-none"></div>
+            </div>
         </div>
-        <div class="mb-3">
-            <label class="form-label">パスワード確認</label>
-            <input type="password" class="form-control" name="passwordConfirm" required />
+
+        <div class="col-lg-8">
+            <div class="list-panel mb-4">
+                <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+                    <h3 class="h5 mb-0">自分の投稿曲</h3>
+                    <a href="/song/register" class="btn btn-sm btn-outline-primary">曲の新規作成</a>
+                </div>
+                <div id="created-songs"></div>
+            </div>
+
+            <div class="list-panel">
+                <h3 class="h5 mb-3">自分の演奏</h3>
+                <div id="played-songs"></div>
+            </div>
+
+            <div class="list-panel mt-4">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <h3 class="h5 mb-3">フォロー中</h3>
+                        <div id="following-members"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <h3 class="h5 mb-3">フォロワー</h3>
+                        <div id="follower-members"></div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-primary">変更</button>
-            <a class="btn btn-link" th:href="@{/song/list}">戻る</a>
-        </div>
-    </form>
-    <div id="error-message" class="alert alert-danger mt-3 d-none"></div>
+    </div>
 </div>
+
 <script>
     $(document).ready(function () {
+        function appendStat(container, text) {
+            container.append($('<span>').text(text));
+        }
+
+        function renderCreatedSongs(songs) {
+            const container = $('#created-songs');
+            container.empty();
+
+            if (songs.length === 0) {
+                container.append($('<div>').addClass('empty-message').text('まだ投稿した曲はありません。'));
+                return;
+            }
+
+            const list = $('<div>').addClass('list-group list-group-flush');
+            songs.forEach(song => {
+                const item = $('<a>')
+                    .addClass('list-group-item list-group-item-action px-0')
+                    .attr('href', `/song/detail/${song.id}`);
+                item.append($('<div>').addClass('fw-semibold').text(song.title));
+                item.append($('<div>').addClass('text-muted small mb-2').text(song.note));
+
+                const stats = $('<div>').addClass('stats');
+                appendStat(stats, `BPM ${song.bpm}`);
+                appendStat(stats, song.beatName);
+                appendStat(stats, `演奏 ${song.playCount}`);
+                appendStat(stats, `いいね ${song.likeCount}`);
+                appendStat(stats, `コメント ${song.commentCount}`);
+                item.append(stats);
+                list.append(item);
+            });
+            container.append(list);
+        }
+
+        function renderPlayedSongs(plays) {
+            const container = $('#played-songs');
+            container.empty();
+
+            if (plays.length === 0) {
+                container.append($('<div>').addClass('empty-message').text('まだ投稿した演奏はありません。'));
+                return;
+            }
+
+            const list = $('<div>').addClass('list-group list-group-flush');
+            plays.forEach(play => {
+                const item = $('<a>')
+                    .addClass('list-group-item list-group-item-action px-0')
+                    .attr('href', `/song/detail/${play.songId}`);
+                item.append($('<div>').addClass('fw-semibold').text(play.playTitle));
+                item.append($('<div>').addClass('small text-muted').text(play.songTitle));
+                item.append($('<div>').addClass('text-muted small mb-2').text(play.playNote));
+
+                const stats = $('<div>').addClass('stats');
+                appendStat(stats, play.instrumentName);
+                appendStat(stats, `いいね ${play.likeCount}`);
+                appendStat(stats, `コメント ${play.commentCount}`);
+                item.append(stats);
+                list.append(item);
+            });
+            container.append(list);
+        }
+
+        function renderMemberList(containerSelector, members, emptyText) {
+            const container = $(containerSelector);
+            container.empty();
+
+            if (members.length === 0) {
+                container.append($('<div>').addClass('empty-message').text(emptyText));
+                return;
+            }
+
+            const list = $('<div>').addClass('list-group list-group-flush');
+            members.forEach(member => {
+                list.append($('<div>').addClass('list-group-item px-0').text(member.memberName));
+            });
+            container.append(list);
+        }
+
         $.get("/api/member/mypage", function (data) {
-            $("input[name='mailAddress']").val(data.mailAddress);
-            $("input[name='name']").val(data.name);
+            $("input[name='mailAddress']").val(data.profile.mailAddress);
+            $("input[name='name']").val(data.profile.name);
+            $("#following-count").text(data.followingCount);
+            $("#follower-count").text(data.followerCount);
+            renderCreatedSongs(data.createdSongs);
+            renderPlayedSongs(data.playedSongs);
+            renderMemberList('#following-members', data.followingMembers, 'まだ誰もフォローしていません。');
+            renderMemberList('#follower-members', data.followerMembers, 'まだフォロワーはいません。');
         });
+        loadUnreadNotificationCount();
 
         $("#mypage-form").on("submit", function(e) {
             e.preventDefault();
@@ -79,6 +237,14 @@
                     $("#error-message").text(err.responseJSON.message).removeClass("d-none");
                 });
         });
+
+        function loadUnreadNotificationCount() {
+            $.get('/api/notifications/unread-count', function(data) {
+                const badge = $('.notification-unread-count');
+                badge.text(data.count);
+                badge.toggleClass('d-none', data.count === 0);
+            });
+        }
     });
 </script>
 </body>

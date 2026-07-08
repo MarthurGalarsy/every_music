@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>ランキング</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            background-color: #f4f6f8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .page-shell {
+            max-width: 1040px;
+            margin: 40px auto;
+            padding: 0 16px;
+        }
+        .ranking-panel {
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 24px;
+        }
+        .ranking-item {
+            border-bottom: 1px solid #e9ecef;
+            padding: 1rem 0;
+        }
+        .ranking-item:last-child {
+            border-bottom: none;
+        }
+        .rank-number {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            background-color: #f1f3f5;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+        .song-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+        }
+        .song-tag {
+            border: 1px solid #0d6efd;
+            border-radius: 999px;
+            color: #0d6efd;
+            background-color: #ffffff;
+            padding: 0.15rem 0.5rem;
+            font-size: 0.85rem;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .song-tag:hover {
+            background-color: #e7f1ff;
+            color: #0a58ca;
+        }
+        .stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .empty-message {
+            color: #6c757d;
+            border: 1px dashed #ced4da;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="page-shell">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">ランキング</h2>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-primary" th:href="@{/notifications}">
+                通知 <span class="badge text-bg-danger notification-unread-count d-none">0</span>
+            </a>
+            <a class="btn btn-outline-primary" th:href="@{/timeline}">タイムライン</a>
+            <a class="btn btn-outline-dark" th:href="@{/song/list}">曲一覧へ</a>
+        </div>
+    </div>
+
+    <div class="ranking-panel">
+        <div class="btn-group mb-4" role="group" aria-label="ランキング種別">
+            <button type="button" class="btn btn-primary ranking-type-button" data-type="featured">注目</button>
+            <button type="button" class="btn btn-outline-primary ranking-type-button" data-type="likes">いいね</button>
+            <button type="button" class="btn btn-outline-primary ranking-type-button" data-type="comments">コメント</button>
+            <button type="button" class="btn btn-outline-primary ranking-type-button" data-type="plays">演奏参加</button>
+        </div>
+        <div id="ranking-list"></div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        const initialType = new URLSearchParams(location.search).get('type') || 'featured';
+        let currentType = ['featured', 'likes', 'comments', 'plays'].includes(initialType) ? initialType : 'featured';
+
+        function renderTags(tags) {
+            if (!tags || tags.length === 0) return '';
+            const tagLinks = tags.map(tag => {
+                const encoded = encodeURIComponent(tag.tagName);
+                return `<a class="song-tag" href="/song/list?tag=${encoded}">#${tag.tagName}</a>`;
+            }).join('');
+            return `<div class="song-tags mt-2">${tagLinks}</div>`;
+        }
+
+        function renderRanking(songs) {
+            const list = $('#ranking-list');
+            list.empty();
+
+            if (songs.length === 0) {
+                list.append($('<div>').addClass('empty-message').text('ランキング対象の曲はまだありません。'));
+                return;
+            }
+
+            songs.forEach((song, index) => {
+                const row = $(`
+                    <div class="ranking-item">
+                        <div class="d-flex gap-3 align-items-start">
+                            <div class="rank-number">${index + 1}</div>
+                            <div class="flex-grow-1">
+                                <a class="fw-semibold d-block" href="/song/detail/${song.id}">${song.songTitle}</a>
+                                <div class="text-muted small">${song.createrName} / BPM ${song.bpm} / ${song.beatName}</div>
+                                <div class="text-muted small mt-1">${song.songNote}</div>
+                                ${renderTags(song.tags)}
+                                <div class="stats mt-2">
+                                    <span>注目 ${song.rankingScore}</span>
+                                    <span>いいね ${song.likeCount}</span>
+                                    <span>コメント ${song.commentCount}</span>
+                                    <span>演奏 ${song.playCount}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `);
+                list.append(row);
+            });
+        }
+
+        function selectType(type) {
+            currentType = type;
+            $('.ranking-type-button').each(function () {
+                const button = $(this);
+                const active = button.data('type') === type;
+                button.toggleClass('btn-primary', active);
+                button.toggleClass('btn-outline-primary', !active);
+            });
+        }
+
+        function loadRanking() {
+            selectType(currentType);
+            $.get('/api/ranking/songs', { type: currentType, limit: 20 }, renderRanking)
+                .fail(() => {
+                    $('#ranking-list').empty().append(
+                        $('<div>').addClass('empty-message').text('ランキングの取得に失敗しました。')
+                    );
+                });
+        }
+
+        function loadUnreadNotificationCount() {
+            $.get('/api/notifications/unread-count', function(data) {
+                const badge = $('.notification-unread-count');
+                badge.text(data.count);
+                badge.toggleClass('d-none', data.count === 0);
+            });
+        }
+
+        $('.ranking-type-button').on('click', function () {
+            currentType = $(this).data('type');
+            history.replaceState(null, '', `/ranking?type=${encodeURIComponent(currentType)}`);
+            loadRanking();
+        });
+
+        loadRanking();
+        loadUnreadNotificationCount();
+    });
+</script>
+</body>
+</html>

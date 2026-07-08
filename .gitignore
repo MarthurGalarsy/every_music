@@ -1,0 +1,23 @@
+# Build outputs
+build/
+bin/
+out/
+
+# Gradle
+.gradle/
+
+# IDE files
+.idea/
+*.iml
+
+# Local environment
+.env
+
+# Local object storage data
+minio/
+
+# OS files
+.DS_Store
+
+# Local assistant/tooling state
+.aiassistant/

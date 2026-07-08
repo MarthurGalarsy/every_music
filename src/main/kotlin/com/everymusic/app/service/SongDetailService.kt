@@ -16,7 +16,10 @@ class SongDetailService(
     private val chordMapper: ChordProgressionMapper,
     private val songPlayMapper: SongPlayMapper,
     private val songPlayFileMapper: SongPlayFileMapper,
-    private val interactionService: InteractionService
+    private val interactionService: InteractionService,
+    private val songRecruitmentService: SongRecruitmentService,
+    private val tagService: TagService,
+    private val followService: FollowService
 ) {
 
     fun loadSongDetail(songId: Long, memberId: Long): SongDetailView {
@@ -45,11 +48,14 @@ class SongDetailService(
                         id = play.id,
                         title = play.playTitle,
                         note = play.playNote,
+                        playerId = play.playerId,
                         playerName = player!!.memberName,
                         audioUrl = s3UploaderService.getPublicUrl(file.s3Key),
                         liked = playSummary.liked,
                         likeCount = playSummary.likeCount,
-                        commentCount = playSummary.commentCount
+                        commentCount = playSummary.commentCount,
+                        followingPlayer = followService.isFollowing(memberId, play.playerId),
+                        canFollowPlayer = memberId != play.playerId
                     )
                 }
                 if (filteredPlays.isNotEmpty()) inst to filteredPlays else null
@@ -62,14 +68,22 @@ class SongDetailService(
                 note = song.songNote,
                 bpm = song.bpm,
                 beat = beat.name,
+                createrId = song.createrId,
                 // 必ずいる
                 creater = creater!!.memberName,
                 liked = songSummary.liked,
                 likeCount = songSummary.likeCount,
-                commentCount = songSummary.commentCount
+                commentCount = songSummary.commentCount,
+                followingCreator = followService.isFollowing(memberId, song.createrId),
+                canFollowCreator = memberId != song.createrId
             ),
             structures = structures,
-            instrumentMap = instrumentMap
+            instrumentMap = instrumentMap,
+            allInstruments = instruments,
+            recruitments = songRecruitmentService.findActiveBySongId(songId),
+            canEditRecruitments = song.createrId == memberId,
+            tags = tagService.findBySongId(songId),
+            canEditTags = song.createrId == memberId
         )
     }
 }

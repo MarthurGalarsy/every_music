@@ -61,6 +61,11 @@
     <label class="form-label">拍子</label>
     <select class="form-select" id="beatId"></select>
 </div>
+<div class="mb-3">
+    <label class="form-label">タグ</label>
+    <input type="text" class="form-control" id="tags" placeholder="ロック, 初心者歓迎, ボーカル募集">
+    <div class="form-text" th:text="|カンマ区切りで${maxTagCount}個まで、1つ${maxTagLength}文字以内で入力できます。|">カンマ区切りで5個まで、1つ20文字以内で入力できます。</div>
+</div>
 <p>曲の構成は上から下の順番で流れるものとします</p>
 <p>コード進行は左から右に流れるものとします</p>
 <p>曲の構成はドラッグ＆ドロップで上下を入れ替えることができます</p>
@@ -72,9 +77,11 @@
 <div id="error-message" class="alert alert-danger mt-3 d-none"></div>
 
 <script th:inline="javascript">
-    const beats = [[${beats}]];
-    const sections = [[${sections}]];
-    const copySong = [[${copySong}]];
+    const beats = /*[[${beats}]]*/ [];
+    const sections = /*[[${sections}]]*/ [];
+    const copySong = /*[[${copySong}]]*/ null;
+    const maxTagCount = /*[[${maxTagCount}]]*/ 5;
+    const maxTagLength = /*[[${maxTagLength}]]*/ 20;
 </script>
 <script>
     function createChordRow(chord = '', measure = '') {
@@ -115,6 +122,14 @@
         $(".sortable-horizontal").sortable({ axis: "x" });
     }
 
+    function parseTags(value) {
+        return value
+            .split(',')
+            .map(tag => tag.trim())
+            .filter(tag => tag.length > 0)
+            .filter((tag, index, tags) => tags.indexOf(tag) === index);
+    }
+
     $(function () {
         beats.forEach(b => $("#beatId").append(`<option value="${b.id}">${b.name}</option>`));
 
@@ -148,6 +163,7 @@
             $("#note").val(copySong.note);
             $("#bpm").val(copySong.bpm);
             $("#beatId").val(copySong.beatId);
+            $("#tags").val((copySong.tags || []).join(', '));
             copySong.structures.forEach(s => {
                 const block = createStructureBlock(s.sectionId, s.chords);
                 $("#structure-list").append(block);
@@ -160,6 +176,7 @@
             const note = $("#note").val();
             const bpm = parseInt($("#bpm").val());
             const beatId = parseInt($("#beatId").val());
+            const tags = parseTags($("#tags").val());
 
             if (!title || !note || !bpm || !beatId) {
                 $("#error-message").text("すべての必須項目を入力してください").removeClass("d-none");
@@ -199,13 +216,23 @@
                 return;
             }
 
+            if (tags.length > maxTagCount) {
+                $("#error-message").text(`タグは${maxTagCount}個以内で入力してください`).removeClass("d-none");
+                return;
+            }
+
+            if (tags.some(tag => tag.length > maxTagLength)) {
+                $("#error-message").text(`タグは${maxTagLength}文字以内で入力してください`).removeClass("d-none");
+                return;
+            }
+
             if (!confirm("一度投稿した曲は削除・変更ができません。よろしいですか？")) return;
 
             $.ajax({
                 url: "/api/song/register",
                 type: "POST",
                 contentType: "application/json",
-                data: JSON.stringify({ title, note, bpm, beatId, structures }),
+                data: JSON.stringify({ title, note, bpm, beatId, structures, tags }),
                 success: function (data) {
                     window.location.href = data.redirect;
                 },

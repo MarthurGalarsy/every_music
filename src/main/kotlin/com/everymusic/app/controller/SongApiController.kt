@@ -22,11 +22,12 @@ class SongApiController(
     fun getSongList(
         @RequestParam(required = false) title: String?,
         @RequestParam(required = false) creater: String?,
+        @RequestParam(required = false) tag: String?,
         @RequestParam(defaultValue = "1") page: Int,
         @RequestParam(defaultValue = "10") size: Int,
         session: HttpSession
     ): ResponseEntity<Map<String, Any>> {
-        val (songs, totalCount) = songService.searchSongs(title, creater, page, size)
+        val (songs, totalCount) = songService.searchSongs(title, creater, tag, page, size)
         return ResponseEntity.ok(mapOf(
             "songs" to songs,
             "totalCount" to totalCount

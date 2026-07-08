@@ -8,6 +8,7 @@ interface SongStructureMapper {
     @Select("""
         SELECT
             ss.id,
+            ss.section_id,
             s.name AS section_name
         FROM song_structure ss
         JOIN sections s

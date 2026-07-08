@@ -1,5 +1,7 @@
 package com.everymusic.app.controller
 
+import com.everymusic.app.config.LOGIN_MEMBER_SESSION_KEY
+import com.everymusic.app.config.LOGIN_REQUIRED_MESSAGE
 import com.everymusic.app.model.*
 import com.everymusic.app.service.MemberService
 import jakarta.servlet.http.HttpSession
@@ -23,7 +25,7 @@ class MemberApiController(
     ): ResponseEntity<Map<String, Any>> {
         val member = memberService.login(mailAddress, password)
         return if (member != null) {
-            session.setAttribute("loginMember", member)
+            session.setAttribute(LOGIN_MEMBER_SESSION_KEY, member)
             ResponseEntity.ok(mapOf("message" to "ログイン成功", "redirect" to "/song/list"))
         } else {
             ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(mapOf("message" to "IDかパスワードが間違っています。"))
@@ -41,7 +43,7 @@ class MemberApiController(
         val success = memberService.register(form.name, form.mailAddress, form.password)
         return if (success) {
             val member = memberService.login(form.mailAddress, form.password)
-            session.setAttribute("loginMember", member)
+            session.setAttribute(LOGIN_MEMBER_SESSION_KEY, member)
             ResponseEntity.ok(mapOf("message" to "新規登録しました。ようこそ！", "redirect" to "/song/list"))
         } else {
             ResponseEntity.status(HttpStatus.CONFLICT).body(mapOf("message" to "既に登録されています"))
@@ -50,14 +52,13 @@ class MemberApiController(
 
     @GetMapping("/mypage")
     fun getMypage(session: HttpSession): ResponseEntity<Any> {
-        val loginMember = session.getAttribute("loginMember") as? Member
-            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(mapOf("message" to "ログインが必要です"))
+        val loginMember = currentMember(session)
+            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(mapOf("message" to LOGIN_REQUIRED_MESSAGE))
 
-        val member = memberService.findById(loginMember.id)
+        val mypage = memberService.loadMypage(loginMember.id)
             ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf("message" to "メンバー情報が見つかりません"))
 
-        val form = MypageForm(member.mailAddress, member.memberName)
-        return ResponseEntity.ok(form)
+        return ResponseEntity.ok(mypage)
     }
 
     @PostMapping("/update")
@@ -68,7 +69,8 @@ class MemberApiController(
         if (form.password != form.passwordConfirm) {
             return ResponseEntity.badRequest().body(mapOf("message" to "パスワードが一致しません"))
         }
-        val member = session.getAttribute("loginMember") as? Member ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(mapOf("message" to "ログインが必要です"))
+        val member = currentMember(session)
+            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(mapOf("message" to LOGIN_REQUIRED_MESSAGE))
         val success = memberService.update(member.id, form.name, form.password)
         return if (success) {
             ResponseEntity.ok(mapOf("message" to "メンバー情報を変更しました。", "redirect" to "/song/list"))

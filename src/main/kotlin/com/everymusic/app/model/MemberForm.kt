@@ -29,3 +29,35 @@ data class MypageForm(
 
     val passwordConfirm: String = ""
 )
+
+data class MypageDashboard(
+    val profile: MypageForm,
+    val createdSongs: List<MypageSongView>,
+    val playedSongs: List<MypagePlayView>,
+    val followingCount: Int,
+    val followerCount: Int,
+    val followingMembers: List<FollowMemberView>,
+    val followerMembers: List<FollowMemberView>
+)
+
+data class MypageSongView(
+    val id: Long,
+    val title: String,
+    val note: String,
+    val bpm: Int,
+    val beatName: String,
+    val playCount: Int,
+    val likeCount: Int,
+    val commentCount: Int
+)
+
+data class MypagePlayView(
+    val id: Long,
+    val songId: Long,
+    val songTitle: String,
+    val playTitle: String,
+    val playNote: String,
+    val instrumentName: String,
+    val likeCount: Int,
+    val commentCount: Int
+)

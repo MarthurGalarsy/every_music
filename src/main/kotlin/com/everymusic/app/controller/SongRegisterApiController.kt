@@ -1,6 +1,6 @@
 package com.everymusic.app.controller
 
-import com.everymusic.app.model.Member
+import com.everymusic.app.config.LOGIN_REQUIRED_MESSAGE
 import com.everymusic.app.model.SongRegisterRequest
 import com.everymusic.app.service.SongRegisterService
 import jakarta.servlet.http.HttpSession
@@ -19,8 +19,8 @@ class SongRegisterApiController(
         @RequestBody @Valid request: SongRegisterRequest,
         session: HttpSession
     ): ResponseEntity<Map<String, String>> {
-        val member = session.getAttribute("loginMember") as? Member
-            ?: return ResponseEntity.status(401).body(mapOf("message" to "ログインが必要です"))
+        val member = currentMember(session)
+            ?: return ResponseEntity.status(401).body(mapOf("message" to LOGIN_REQUIRED_MESSAGE))
 
         songRegisterService.registerSong(request, member)
         return ResponseEntity.ok(mapOf("message" to "投稿完了", "redirect" to "/song/list"))
