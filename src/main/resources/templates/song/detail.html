@@ -29,6 +29,14 @@
         .page-actions .btn {
             white-space: nowrap;
         }
+        .song-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        .song-actions .btn {
+            white-space: nowrap;
+        }
         .chord-box {
             display: inline-block;
             background-color: #e9ecef;
@@ -144,6 +152,14 @@
             }
             .page-actions .btn {
                 width: 100%;
+            }
+            .song-actions {
+                gap: 0.5rem;
+            }
+            .song-actions .btn {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+                font-size: 0.875rem;
             }
         }
     </style>
@@ -288,7 +304,7 @@
     <button class="btn btn-primary" id="play-button">▶️ 再生</button>
     <button class="btn btn-danger" id="stop-button">⏹ 停止</button>
 </div>
-<div class="d-flex gap-3 mt-4 mb-5">
+<div class="song-actions mt-4 mb-5">
     <a th:href="@{'/song/register/copy/' + ${song.id}}" class="btn btn-outline-secondary">コピーして新規作成</a>
     <a th:href="@{'/song/play/upload/' + ${song.id}}" class="btn btn-outline-info">演奏投稿</a>
     <a href="/song/list" class="btn btn-outline-dark">戻る</a>
