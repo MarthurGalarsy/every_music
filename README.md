@@ -10,6 +10,15 @@ every one, every time, music
 * OGP画像は共通画像 `/images/ogp-default.svg` を使用する
 * `/sitemap.xml` で公開ページを検索エンジンに通知する
 * `/robots.txt` でクロール可能なページとログイン後の個人ページを整理する
+* トップページでは、未ログインユーザー向けに作曲、演奏投稿、コラボ、フォロー、ランキングの特徴を説明する
+
+## PWA
+* `/manifest.webmanifest` でアプリ名、アイコン、theme-color、standalone表示を設定する
+* `/service-worker.js` を登録する
+* Service Workerはアイコンなど最小限の静的アセットだけをキャッシュする
+* 認証ページ、録音ページ、音声再生、APIレスポンスは強くキャッシュしない
+* アプリアイコンは `/images/pwa-icon.svg` を使用する
+* iPhone向けにapple-mobile-web-app関連metaとapple-touch-iconを出力する
 
 ## 設定
 * `PUBLIC_BASE_URL`
@@ -25,6 +34,22 @@ every one, every time, music
 * `/introduction`
 * `/sitemap.xml`
 * `/robots.txt`
+* `/manifest.webmanifest`
+* `/service-worker.js`
+* 静的アセット
+
+## Search Console運用
+1. `https://every-music.com/` をGoogle Search Consoleに登録する
+2. 可能ならドメインプロパティでDNS認証する
+3. DNS認証が難しい場合はURLプレフィックスでHTMLまたはmeta認証する
+4. `https://every-music.com/sitemap.xml` を送信する
+5. インデックス状況とクロールエラーを確認する
+6. クロールエラーがある場合は原因と対応方針を整理する
+
+## 公開範囲の方針
+* 未ログインで見せるのは `/`、`/member/register`、`/introduction`、`/sitemap.xml`、`/robots.txt`、PWA関連ファイル、静的アセットのみ
+* 曲一覧、ランキング、曲詳細、マイページ、通知、タイムライン、API系は原則ログイン必須のまま
+* SEO対応のためにログイン後ページの公開範囲を広げない
 
 ---
 

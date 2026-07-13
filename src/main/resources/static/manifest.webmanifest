@@ -1,0 +1,19 @@
+{
+  "name": "Every Music",
+  "short_name": "Every Music",
+  "description": "作曲したコード進行に演奏を重ね、音楽仲間と広がるコラボ音楽アプリです。",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f39c12",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/images/pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -27,6 +27,8 @@ class AuthFilter : GenericFilterBean() {
             path.startsWith("/images") ||
             path == "/robots.txt" ||
             path == "/sitemap.xml" ||
+            path == "/manifest.webmanifest" ||
+            path == "/service-worker.js" ||
             path == "/favicon.ico"
         val isPublicMemberPage = path == "/member/register"
         val isPublicPage = path == "/" ||
